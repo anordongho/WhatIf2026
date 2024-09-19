@@ -1,0 +1,22 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./dist/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@sd-jwt/crypto-nodejs": "^0.7.2",
+    "@sd-jwt/sd-jwt-vc": "^0.7.2",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.5.5",
+    "ethers": "^6.13.2",
+    "express": "^4.21.0",
+    "sd-jwt": "^0.0.0"
+  }
+}
