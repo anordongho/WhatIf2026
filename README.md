@@ -8,8 +8,10 @@
 
 # 컴파일, 로컬에서 실행
 ## test/uiModule 폴더에서 
- uimodule % tsc    uimodule % npm run build
+ uimodule % tsc  
+ uimodule % npm run build
 ## test 폴더에서
- test % tsc   test % npm start
+ test % tsc  
+ test % npm start
 ## localhost:8001 접속
 
