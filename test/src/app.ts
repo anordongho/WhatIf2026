@@ -8,6 +8,7 @@ import { generateSalt, digest as hasher } from '@sd-jwt/crypto-nodejs';
 import { unpack, createHashMapping } from '@sd-jwt/decode';
 import Crypto from "node:crypto";
 import { SDJwt, listKeys, pack } from './sdjwt';
+import { deployDID } from "./deploy-did";
 
 
 const app = express();
