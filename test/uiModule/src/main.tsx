@@ -11,18 +11,18 @@ const UserForm: React.FC = () => {
   const [phone_number, setPhoneNumber] = useState('');
 
   const [gender, setGender] = useState('');
-  const [birthdate, setBirthdate] = useState('');
+  const [birth_date, setBirthdate] = useState('');
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     // 사용자 데이터를 서버로 전송할 때 사용하는 로직
-    console.log({ name, id, unique_id, gender, birthdate, email, address, phone_number });
+    console.log({ name, id, unique_id, gender, birth_date, email, address, phone_number });
     // 예: 서버에 POST 요청 보내기
     fetch('/issue-vc', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        payload: { name, id, unique_id, gender, birthdate, email, address, phone_number },  // 'payload'라는 키로 감싸서 전송
+        payload: { name, id, unique_id, gender, birth_date, email, address, phone_number },  // 'payload'라는 키로 감싸서 전송
       }),
     })
       .then(response => response.json())
@@ -62,7 +62,7 @@ const UserForm: React.FC = () => {
         </div>
         <div>
           <label>Birthdate:</label>
-          <input type="date" value={birthdate} onChange={(e) => setBirthdate(e.target.value)} required />
+          <input type="date" value={birth_date} onChange={(e) => setBirthdate(e.target.value)} required />
         </div>
         <div>
           <label>Email:</label>
