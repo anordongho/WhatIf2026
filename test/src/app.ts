@@ -52,7 +52,6 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Payload is required' });
     }
 
-    console.log("payload!!!: " + payload + "end of payload");
     const VC_REGISTRY_ADDRESS = "Seoul, Kwanak 1";
 
     const vcInfo: VCInfo = parseToVCInfo(payload, VC_REGISTRY_ADDRESS);
@@ -77,6 +76,9 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
     console.log(jwt);
     console.log(sdJwt);
     console.log(encoded);
+
+    return res.status(200).json({ sdjwt: sdJwt });
+
   } catch (error) {
     console.error('Error issuing JWT:', error);
     res.status(500).json({ error: 'Internal Server Error' });

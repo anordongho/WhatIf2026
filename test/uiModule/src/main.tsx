@@ -13,26 +13,42 @@ const UserForm: React.FC = () => {
   const [gender, setGender] = useState('');
   const [birth_date, setBirthdate] = useState('');
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const [vcMessage, setVcMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sdJwtObject, setSdJwtObject] = useState<object | null>(null);
+
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     // 사용자 데이터를 서버로 전송할 때 사용하는 로직
     console.log({ name, id, unique_id, gender, birth_date, email, address, phone_number });
     // 예: 서버에 POST 요청 보내기
-    fetch('/issue-vc', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        payload: { name, id, unique_id, gender, birth_date, email, address, phone_number },  // 'payload'라는 키로 감싸서 전송
-      }),
-    })
-      .then(response => response.json())
-      .then(data => {
-        // 서버 응답 처리
-        console.log(data);
-      })
-      .catch(error => {
-        console.error('Error:', error);
+    try {
+      const response = await fetch('/issue-vc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          payload: { name, id, unique_id, gender, birth_date, email, address, phone_number },  // 'payload'라는 키로 감싸서 전송
+        }),
       });
+
+      if (response.status == 200) {
+        const data = await response.json();
+
+        const { sdjwt } = data;
+
+        setVcMessage(`Here's your selectively disclosable VC! We've made it so that you can choose to hide anything that you want, except the issuance time.\n\n`);
+        setSdJwtObject(sdjwt); // Store the SD-JWT object for display
+
+      } else {
+        setErrorMessage('Failed to fetch SD-JWT from the server.');
+      }
+
+
+    } catch (error) {
+
+      setErrorMessage('Error occurred while fetching data.');
+
+    }
   };
 
   return (
@@ -78,6 +94,13 @@ const UserForm: React.FC = () => {
         </div>
         <button type="submit">Submit</button>
       </form>
+
+      <div>
+        <h1>Your Verifiable Credential</h1>
+        {vcMessage && <pre>{vcMessage}</pre>} {/* Display the VC */}
+        {sdJwtObject && <pre>{JSON.stringify(sdJwtObject, null, 2)}</pre>} {/* Display the SD-JWT object */}
+        {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>} {/* Display errors if any */}
+      </div>
     </div>
   );
 };
