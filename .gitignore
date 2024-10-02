@@ -120,6 +120,9 @@ web_modules/
 .cache
 .parcel-cache
 
+# Ignore the compiled JavaScript bundle
+test/public/js/build.js
+
 # Next.js build output
 .next
 out
