@@ -38,6 +38,8 @@ const UserForm: React.FC = () => {
         const data = await response.json();
         const { sdjwt } = data;
 
+        localStorage.setItem('sdjwt', JSON.stringify(sdjwt));
+
         // Step 2: Send request to decode the encoded SD-JWT
         const disclosuresResponse = await fetch('/decode-sdjwt', {
           method: 'POST',
@@ -50,6 +52,9 @@ const UserForm: React.FC = () => {
         if (disclosuresResponse.ok) {
           const disclosuresData = await disclosuresResponse.json();
           const { decodedDisclosures } = disclosuresData;
+
+          localStorage.setItem('disclosures', JSON.stringify(decodedDisclosures));
+
 
           // Step 3: Display the decoded SD-JWT disclosures
           setVcMessage(`Here's your selectively disclosable VC! We've made it so that you can choose to hide anything that you want, except the issuance time.\n\n`);

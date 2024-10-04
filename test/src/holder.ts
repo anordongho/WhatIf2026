@@ -16,9 +16,6 @@ export async function decodeAndSaveSdJwt(sdJwt: string) {
         console.log('The decoded Disclosures are:');
         console.log(JSON.stringify(decodedSdJwt.disclosures, null, 2));
 
-        // Save the decoded SD-JWT if necessary (this part depends on your use case)
-        // For example, save to localStorage, a database, or any other storage mechanism:
-        // localStorage.setItem('decodedSdJwt', JSON.stringify(decodedSdJwt));
 
         const claims = await getClaims(
             decodedSdJwt.jwt.payload,
