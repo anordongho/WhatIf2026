@@ -19,37 +19,56 @@ const UserForm: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // 사용자 데이터를 서버로 전송할 때 사용하는 로직
+
+    // Log form data
     console.log({ name, id, unique_id, gender, birth_date, email, address, phone_number });
-    // 예: 서버에 POST 요청 보내기
+
     try {
+      // Step 1: Send form data to the server to issue the SD-JWT
       const response = await fetch('/issue-vc', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          payload: { name, id, unique_id, gender, birth_date, email, address, phone_number },  // 'payload'라는 키로 감싸서 전송
+          payload: { name, id, unique_id, gender, birth_date, email, address, phone_number },
         }),
       });
 
-      if (response.status == 200) {
+      // Check if issuing was successful
+      if (response.status === 200) {
         const data = await response.json();
+        const { sdjwt } = data;
 
-        const { encodedSdjwt } = data;
+        // Step 2: Send request to decode the encoded SD-JWT
+        const disclosuresResponse = await fetch('/decode-sdjwt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sdjwt,
+          }),
+        });
 
-        setVcMessage(`Here's your selectively disclosable VC! We've made it so that you can choose to hide anything that you want, except the issuance time.\n\n`);
-        setSdJwtObject(encodedSdjwt); // Store the SD-JWT object for display
+        if (disclosuresResponse.ok) {
+          const disclosuresData = await disclosuresResponse.json();
+          const { decodedDisclosures } = disclosuresData;
+
+          // Step 3: Display the decoded SD-JWT disclosures
+          setVcMessage(`Here's your selectively disclosable VC! We've made it so that you can choose to hide anything that you want, except the issuance time.\n\n`);
+          setSdJwtObject(decodedDisclosures);  // Store the decoded SD-JWT object for display
+          console.log(decodedDisclosures);
+        } else {
+          setErrorMessage('Failed to decode SD-JWT from the server.');
+        }
 
       } else {
         setErrorMessage('Failed to fetch SD-JWT from the server.');
       }
 
-
     } catch (error) {
-
       setErrorMessage('Error occurred while fetching data.');
-
+      console.error('Error:', error);
     }
   };
+
 
   return (
     <div>

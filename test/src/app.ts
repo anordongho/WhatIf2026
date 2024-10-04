@@ -11,6 +11,7 @@ import { SDJwt, listKeys, pack } from './sdjwt';
 import { deployDID } from "./deploy-did";
 
 import { VCInfo, parseToVCInfo } from "./myType";
+import { decodeAndSaveSdJwt } from "./holder";
 
 
 const app = express();
@@ -74,10 +75,6 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
 
     // JWT 서명
     await jwt.sign(testSigner);
-    // const sdJwt = new SDJwt({
-    //   jwt,
-    //   disclosures: disclosureFrame,
-    // });
 
     const credential = await sdJwt.issue(
       {
@@ -89,9 +86,8 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
       disclosureFrame,
     )
 
-    // const encoded = sdJwt.encodeSDJwt();
-    console.log(jwt);
-    console.log("credential!!");
+    // console.log(jwt);
+    // credential is the encoded sdjwt. 
     console.log(credential);
     // console.log(encoded);
 
@@ -103,3 +99,26 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
   }
 });
 
+// decode the response received from issue-vc. Returns disclosures decoded
+// TODO: save the disclosures based on their name, parse the return based on ~, then save it. 
+app.post('/decode-sdjwt', async (req: Request, res: Response) => {
+  try {
+    const { sdjwt } = req.body;
+
+    // Decode the SD-JWT using the holder function
+    const decodedSdJwt = await decodeAndSaveSdJwt(sdjwt);
+
+    // Send the decoded disclosures back to the client
+
+    if (decodedSdJwt) {
+      // Send the decoded disclosures back to the client
+      res.status(200).json({ decodedDisclosures: decodedSdJwt.disclosures });
+    } else {
+      // Handle case when decoding failed or returned undefined
+      res.status(500).json({ error: 'Failed to decode SD-JWT' });
+    }
+  } catch (error) {
+    console.error('Error decoding SD-JWT:', error);
+    res.status(500).json({ error: 'Failed to decode SD-JWT' });
+  }
+});
