@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import path from "path";
 import { Jwt } from "./jwt";
 import type { DisclosureFrame, Signer } from '@sd-jwt/types';
-import { generateSalt, digest as hasher } from '@sd-jwt/crypto-nodejs';
+import { generateSalt, digest } from '@sd-jwt/crypto-nodejs';
 import { unpack, createHashMapping } from '@sd-jwt/decode';
 import Crypto from "node:crypto";
 import { SDJwt, listKeys, pack } from './sdjwt';
@@ -41,6 +41,9 @@ const sdJwt = new SDJwtVcInstance({
     return true;
   },
   signAlg: 'HS256',
+  hasher: digest,
+  hashAlg: 'SHA-256',
+  saltGenerator: generateSalt,
 });
 
 // JWT 발급 API
@@ -56,6 +59,10 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
 
     const vcInfo: VCInfo = parseToVCInfo(payload, VC_REGISTRY_ADDRESS);
 
+    const disclosureFrame: DisclosureFrame<typeof vcInfo> = {
+      _sd: ['gender', 'birth_date', 'email', 'name', 'phone_number']
+    };
+
     // JWT 생성
     const jwt = new Jwt({
       header: {
@@ -67,17 +74,28 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
 
     // JWT 서명
     await jwt.sign(testSigner);
-    const sdJwt = new SDJwt({
-      jwt,
-      disclosures: [],
-    });
+    // const sdJwt = new SDJwt({
+    //   jwt,
+    //   disclosures: disclosureFrame,
+    // });
 
-    const encoded = sdJwt.encodeSDJwt();
+    const credential = await sdJwt.issue(
+      {
+        iss: 'Issuer',
+        iat: new Date().getTime(),
+        vct: 'ExampleCredentials',
+        ...vcInfo,
+      },
+      disclosureFrame,
+    )
+
+    // const encoded = sdJwt.encodeSDJwt();
     console.log(jwt);
-    console.log(sdJwt);
-    console.log(encoded);
+    console.log("credential!!");
+    console.log(credential);
+    // console.log(encoded);
 
-    return res.status(200).json({ sdjwt: sdJwt });
+    return res.status(200).json({ sdjwt: credential });
 
   } catch (error) {
     console.error('Error issuing JWT:', error);
