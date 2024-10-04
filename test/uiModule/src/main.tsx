@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 
-import { present, presentableKeys } from '@sd-jwt/present';
-import { decodeSdJwt, getClaims } from '@sd-jwt/decode';
-import { digest } from '@sd-jwt/crypto-nodejs';
-
 // 사용자 입력 폼 컴포넌트
 const UserForm: React.FC = () => {
   const [name, setName] = useState('');
@@ -40,10 +36,8 @@ const UserForm: React.FC = () => {
 
         const { encodedSdjwt } = data;
 
-        const sdjwt = await decodeSdJwt(encodedSdjwt, digest);
-
         setVcMessage(`Here's your selectively disclosable VC! We've made it so that you can choose to hide anything that you want, except the issuance time.\n\n`);
-        setSdJwtObject(sdjwt); // Store the SD-JWT object for display
+        setSdJwtObject(encodedSdjwt); // Store the SD-JWT object for display
 
       } else {
         setErrorMessage('Failed to fetch SD-JWT from the server.');
