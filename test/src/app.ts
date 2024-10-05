@@ -11,7 +11,8 @@ import { SDJwt, listKeys, pack } from './sdjwt';
 import { deployDID } from "./deploy-did";
 
 import { VCInfo, parseToVCInfo } from "./myType";
-import { decodeAndSaveSdJwt } from "./holder";
+import { decodeSdJwtHolder } from "./holder";
+import { generateKeyPairUtil, generateSignerVerifierUtil } from "./crypto-utils";
 
 
 const app = express();
@@ -25,26 +26,20 @@ app.listen('8001', () => {
   console.log('Server started');
 });
 
-const { privateKey } = Crypto.generateKeyPairSync('ed25519');
-const testSigner: Signer = async (data: string) => {
-  const sig = Crypto.sign(null, Buffer.from(data), privateKey);
-  return Buffer.from(sig).toString('base64url');
-};
+const issuerKeyPair = generateKeyPairUtil();    // Issuer keys
+const holderKeyPair = generateKeyPairUtil();    // Holder keys
+const verifierKeyPair = generateKeyPairUtil();  // Verifier keys
+
+const { signer, verifier } = generateSignerVerifierUtil(issuerKeyPair.privateKey, issuerKeyPair.publicKey);
 
 // SD-JWT 생성기 설정
 const sdJwt = new SDJwtVcInstance({
-  signer: async (data) => {
-    const wallet = ethers.Wallet.createRandom();
-    return wallet.signMessage(data);
-  },
-  verifier: async (data, signature) => {
-    // 서명 검증 로직 (optional)
-    return true;
-  },
-  signAlg: 'HS256',
-  hasher: digest,
+  signer,
+  verifier,
+  signAlg: 'RS256', // Using RS256 for RSA signature algorithm
+  hasher: digest,   // Assuming digest function is already defined
   hashAlg: 'SHA-256',
-  saltGenerator: generateSalt,
+  saltGenerator: generateSalt, // Assuming saltGenerator is defined
 });
 
 // JWT 발급 API
@@ -65,16 +60,16 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
     };
 
     // JWT 생성
-    const jwt = new Jwt({
-      header: {
-        alg: 'HS256',
-        typ: 'JWT'
-      },
-      payload: vcInfo
-    });
+    // const jwt = new Jwt({
+    //   header: {
+    //     alg: 'HS256',
+    //     typ: 'JWT'
+    //   },
+    //   payload: vcInfo
+    // });
 
-    // JWT 서명
-    await jwt.sign(testSigner);
+    // // JWT 서명
+    // await jwt.sign(signer);
 
     const credential = await sdJwt.issue(
       {
@@ -100,13 +95,13 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
 });
 
 // decode the response received from issue-vc. Returns disclosures decoded
-// TODO: save the disclosures based on their name, parse the return based on ~, then save it. 
+// The holder will save the decoded disclosures on their local storage.
 app.post('/decode-sdjwt', async (req: Request, res: Response) => {
   try {
     const { sdjwt } = req.body;
 
     // Decode the SD-JWT using the holder function
-    const decodedSdJwt = await decodeAndSaveSdJwt(sdjwt);
+    const decodedSdJwt = await decodeSdJwtHolder(sdjwt);
 
     // Send the decoded disclosures back to the client
 

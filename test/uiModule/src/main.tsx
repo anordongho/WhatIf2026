@@ -16,6 +16,7 @@ const UserForm: React.FC = () => {
   const [vcMessage, setVcMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [sdJwtObject, setSdJwtObject] = useState<object | null>(null);
+  const [disclosureobject, setDisclosureObject] = useState<object | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -58,7 +59,8 @@ const UserForm: React.FC = () => {
 
           // Step 3: Display the decoded SD-JWT disclosures
           setVcMessage(`Here's your selectively disclosable VC! We've made it so that you can choose to hide anything that you want, except the issuance time.\n\n`);
-          setSdJwtObject(decodedDisclosures);  // Store the decoded SD-JWT object for display
+          setSdJwtObject(sdjwt); // the encoded form of sdjwt
+          setDisclosureObject(decodedDisclosures);  // Store the decoded SD-JWT disclosures part for display
           console.log(decodedDisclosures);
         } else {
           setErrorMessage('Failed to decode SD-JWT from the server.');
@@ -123,6 +125,7 @@ const UserForm: React.FC = () => {
         <h1>Your Verifiable Credential</h1>
         {vcMessage && <pre>{vcMessage}</pre>} {/* Display the VC */}
         {sdJwtObject && <pre>{JSON.stringify(sdJwtObject, null, 2)}</pre>} {/* Display the SD-JWT object */}
+        {disclosureobject && <pre>{JSON.stringify(disclosureobject, null, 2)}</pre>} {/* Display the decoded disclosure object */}
         {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>} {/* Display errors if any */}
       </div>
     </div>
