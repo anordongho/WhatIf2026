@@ -8,11 +8,11 @@ import { generateSalt, digest } from '@sd-jwt/crypto-nodejs';
 import { unpack, createHashMapping } from '@sd-jwt/decode';
 import { SDJwt, listKeys, pack } from './sdjwt';
 import { deployDID } from "./deploy-did";
-import { publicEncrypt, privateDecrypt, constants } from "crypto";
+import { publicEncrypt, privateDecrypt, constants, randomBytes } from "crypto";
 
 import { VCInfo, parseToVCInfo } from "./myType";
 import { decodeSdJwtHolder } from "./holder";
-import { generateKeyPairUtil, generateSignerVerifierUtil, encryptUtil, decryptUtil } from "./crypto-utils";
+import { generateKeyPairUtil, generateSignerVerifierUtil, encryptUtil, decryptUtil, generateSymmetricKeyAndIv, encryptDataWithAES, decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptSymmetricKeyWithRSA } from "./crypto-utils";
 
 
 const app = express();
@@ -95,7 +95,15 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
     // credential is the encoded sdjwt. 
     // console.log(credential);
 
-    return res.status(200).json({ sdjwt: credential });
+    // encrypt the encoded sdjwt (credential) - since credential is too big for RSA, we need to use aes
+    // Generate AES symmetric key and IV, encrypt the data using symmetric key and IV, encrypt the symmetric key & return. 
+    const { aesKey, iv } = generateSymmetricKeyAndIv();
+    const encryptedCredentialandIV = encryptDataWithAES(credential, aesKey, iv);
+    const encryptedSymmetricKey = encryptSymmetricKeyWithRSA(aesKey, holderKeyPair.publicKey);
+
+    console.log("encrypted symmetric key original: ", encryptedSymmetricKey)
+
+    return res.status(200).json({ encryptedCredentialandIV, encryptedSymmetricKey });
 
   } catch (error) {
     console.error('Error issuing JWT:', error);
@@ -147,3 +155,40 @@ app.post('/encrypt-holder_to_issuer', async (req: Request, res: Response) => {
   }
 
 });
+
+app.post('/decrypt-holder', async (req: Request, res: Response) => {
+
+  try {
+    const { encryptedDataBase64 } = req.body;
+
+    const decryptedData = decryptUtil(encryptedDataBase64, holderKeyPair.privateKey);
+
+    // Respond with the encrypted data and status 200
+    res.status(200).json({ decryptedData: decryptedData });
+
+  } catch (error) {
+    console.error('Error while decrypting:', error);
+    res.status(500).json({ error: 'Failed to decrypt the data' });
+  }
+
+});
+
+app.post('/decrypt-holder-aes', async (req: Request, res: Response) => {
+
+  try {
+    const { encryptedCredentialandIV, encryptedSymmetricKey } = req.body;
+
+    const symmetricKey = decryptSymmetricKeyWithRSA(Buffer.from(encryptedSymmetricKey, 'base64'), holderKeyPair.privateKey);
+
+    const decryptedData = decryptDataWithAES(encryptedCredentialandIV.encryptedData, symmetricKey, Buffer.from(encryptedCredentialandIV.iv, 'base64'));
+
+    // Respond with the encrypted data and status 200
+    res.status(200).json({ sdjwt: decryptedData });
+
+  } catch (error) {
+    console.error('Error while decrypting:', error);
+    res.status(500).json({ error: 'Failed to decrypt the data' });
+  }
+
+});
+

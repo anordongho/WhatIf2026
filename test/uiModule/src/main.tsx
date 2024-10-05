@@ -47,37 +47,60 @@ const UserForm: React.FC = () => {
         }),
       });
 
-      // Check if issuing was successful
+      // Check if issuance was successful
       if (response.status === 200) {
         const data = await response.json();
-        const { sdjwt } = data;
+        const { encryptedCredentialandIV, encryptedSymmetricKey } = data;
 
-        localStorage.setItem('sdjwt', JSON.stringify(sdjwt));
-
-        // Step 2: Send request to decode the encoded SD-JWT
-        const disclosuresResponse = await fetch('/decode-sdjwt', {
+        // Decrypt the response
+        const sdjwtResponse = await fetch('/decrypt-holder-aes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            sdjwt,
+            encryptedCredentialandIV, encryptedSymmetricKey
           }),
         });
 
-        if (disclosuresResponse.ok) {
-          const disclosuresData = await disclosuresResponse.json();
-          const { decodedDisclosures } = disclosuresData;
+        if (sdjwtResponse.ok) {
+          const sdjwtData = await sdjwtResponse.json();
+          const { sdjwt } = sdjwtData;
 
-          localStorage.setItem('disclosures', JSON.stringify(decodedDisclosures));
+          localStorage.setItem('sdjwt', JSON.stringify(sdjwt));
+
+          // Step 2: Send request to decode the encoded SD-JWT
+          const disclosuresResponse = await fetch('/decode-sdjwt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sdjwt,
+            }),
+          });
+
+          if (disclosuresResponse.ok) {
+            const disclosuresData = await disclosuresResponse.json();
+            const { decodedDisclosures } = disclosuresData;
+
+            localStorage.setItem('disclosures', JSON.stringify(decodedDisclosures));
 
 
-          // Step 3: Display the decoded SD-JWT disclosures
-          setVcMessage(`Here's your selectively disclosable VC! We've made it so that you can choose to hide anything that you want, except the issuance time.\n\n`);
-          setSdJwtObject(sdjwt); // the encoded form of sdjwt
-          setDisclosureObject(decodedDisclosures);  // Store the decoded SD-JWT disclosures part for display
-          console.log(decodedDisclosures);
+            // Step 3: Display the decoded SD-JWT disclosures
+            setVcMessage(`Here's your selectively disclosable VC! We've made it so that you can choose to hide anything that you want, except the issuance time.\n\n`);
+            setSdJwtObject(sdjwt); // the encoded form of sdjwt
+            setDisclosureObject(decodedDisclosures);  // Store the decoded SD-JWT disclosures part for display
+            console.log(decodedDisclosures);
+          } else {
+            setErrorMessage('Failed to decode SD-JWT from the server.');
+          }
+
+
+
+
         } else {
-          setErrorMessage('Failed to decode SD-JWT from the server.');
+          setErrorMessage('Failed to decrypt the given data.');
         }
+
+
+
 
       } else {
         setErrorMessage('Failed to fetch SD-JWT from the server.');

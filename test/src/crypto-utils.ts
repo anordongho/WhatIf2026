@@ -1,4 +1,4 @@
-import { generateKeyPairSync, publicEncrypt, privateDecrypt, sign, verify, constants } from 'crypto';
+import { generateKeyPairSync, publicEncrypt, privateDecrypt, sign, verify, constants, createCipheriv, randomBytes, createDecipheriv } from 'crypto';
 
 // Step 1: Generate RSA Key Pairs for Issuer, Holder, Verifier
 export function generateKeyPairUtil() {
@@ -65,3 +65,69 @@ export function decryptUtil(dataToBeDecrypted: string, privateKey: string) {
     const parsedPayload = JSON.parse(payload.toString());
     return parsedPayload;
 }
+
+/**
+ * Generate a pair of symmetric key and IV
+ * @returns The symmetric key and IV generated.
+ */
+export function generateSymmetricKeyAndIv() {
+    const aesKey = randomBytes(32); // AES-256 key size
+    const iv = randomBytes(16); // Initialization vector for AES
+    return { aesKey, iv };
+}
+
+/**
+ * Encrypt data with AES-256-CBC.
+ * @param data - The plaintext data to encrypt.
+ * @param symmetricKey - The symmetric key for AES encryption (32 bytes).
+ * @param iv - The initialization vector (16 bytes).
+ * @returns The encrypted data and IV used.
+ */
+export const encryptDataWithAES = (data: string, symmetricKey: Buffer, iv: Buffer) => {
+    const cipher = createCipheriv('aes-256-cbc', symmetricKey, iv);
+    let encrypted = cipher.update(data, 'utf8', 'base64');
+    encrypted += cipher.final('base64');
+    return { encryptedData: encrypted, iv: iv.toString('base64') };
+};
+
+/**
+ * Decrypt data encrypted with AES-256-CBC.
+ * @param encryptedData - The encrypted data to decrypt.
+ * @param key - The symmetric key for AES decryption (32 bytes).
+ * @param iv - The initialization vector (16 bytes).
+ * @returns The decrypted plaintext data.
+ */
+export const decryptDataWithAES = (encryptedData: string, key: Buffer, iv: Buffer) => {
+    const decipher = createDecipheriv('aes-256-cbc', key, iv);
+    let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+};
+
+/**
+ * Encrypt a symmetric key with RSA.
+ * @param key - The symmetric key to encrypt.
+ * @param publicKey - The RSA public key for encryption.
+ * @returns The encrypted symmetric key.
+ */
+export const encryptSymmetricKeyWithRSA = (key: Buffer, publicKey: string) => {
+    return publicEncrypt({
+        key: publicKey,
+        padding: constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256',
+    }, key);
+};
+
+/**
+ * Decrypt a symmetric key with RSA.
+ * @param encryptedKey - The encrypted symmetric key.
+ * @param privateKey - The RSA private key for decryption.
+ * @returns The decrypted symmetric key.
+ */
+export const decryptSymmetricKeyWithRSA = (encryptedKey: Buffer, privateKey: string) => {
+    return privateDecrypt({
+        key: privateKey,
+        padding: constants.RSA_PKCS1_OAEP_PADDING,
+        oaepHash: 'sha256',
+    }, encryptedKey);
+};
