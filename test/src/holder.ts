@@ -8,7 +8,7 @@ export async function decodeSdJwtHolder(sdJwt: string) {
     try {
         // Decode the SD-JWT using the provided digest
         console.log("Starting decoding...")
-        console.log(sdJwt);
+        // console.log(sdJwt);
 
         const decodedSdJwt = await decodeSdJwt(sdJwt, digest);
 
@@ -23,7 +23,7 @@ export async function decodeSdJwtHolder(sdJwt: string) {
             digest,
         );
 
-        console.log('The claims are:');
+        console.log('The claims are:'); // the full vc
         console.log(JSON.stringify(claims, null, 2));
 
         return decodedSdJwt;

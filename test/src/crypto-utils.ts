@@ -1,4 +1,4 @@
-import { generateKeyPairSync, publicEncrypt, privateDecrypt, sign, verify } from 'crypto';
+import { generateKeyPairSync, publicEncrypt, privateDecrypt, sign, verify, constants } from 'crypto';
 
 // Step 1: Generate RSA Key Pairs for Issuer, Holder, Verifier
 export function generateKeyPairUtil() {
@@ -21,4 +21,47 @@ export function generateSignerVerifierUtil(privateKey: string, publicKey: string
     };
 
     return { signer, verifier };
+}
+
+// Get the raw input data(any type), then encrypt it using public key to base64 string
+export function encryptUtil(dataToBeEncrypted: any, publicKey: string) {
+
+    // Convert the data (plaintext) into a buffer
+    const dataBuffer = Buffer.from(JSON.stringify(dataToBeEncrypted));
+
+    // Encrypt the form data using the issuer's public key
+    const encryptedData = publicEncrypt(
+        {
+            key: publicKey,
+            padding: constants.RSA_PKCS1_OAEP_PADDING,
+            oaepHash: 'sha256',
+        },
+        dataBuffer
+    );
+
+    // Convert encrypted data to a Base64 string for transmission
+    const encryptedDataBase64 = encryptedData.toString('base64');
+
+    return encryptedDataBase64;
+}
+
+// get the encrypted data(in base64 string) and decrypt it (to decrypted object)
+export function decryptUtil(dataToBeDecrypted: string, privateKey: string) {
+
+    const encryptedBuffer = Buffer.from(dataToBeDecrypted, 'base64');
+
+    // Decrypt the payload using the issuer's private key
+    const payload = privateDecrypt(
+        {
+            key: privateKey,
+            padding: constants.RSA_PKCS1_OAEP_PADDING, // Use OAEP padding
+            oaepHash: 'sha256', // Recommended hash algorithm for OAEP
+        },
+        encryptedBuffer
+    );
+
+    console.log(payload);
+
+    const parsedPayload = JSON.parse(payload.toString());
+    return parsedPayload;
 }
