@@ -4,7 +4,7 @@ import { digest } from '@sd-jwt/crypto-nodejs';
 
 
 // Example function to decode SD-JWT
-export async function decodeAndSaveSdJwt(sdJwt: string) {
+export async function decodeSdJwtHolder(sdJwt: string) {
     try {
         // Decode the SD-JWT using the provided digest
         console.log("Starting decoding...")
