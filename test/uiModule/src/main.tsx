@@ -172,13 +172,13 @@ const DisclosureForm: React.FC = () => {
   const [isDisclosureFormVisible, setDisclosureFormVisible] = useState(false);
 
   const [selectedDisclosures, setSelectedDisclosures] = useState<string[]>([]);
-
-  // Array of disclosable information options
-  const disclosureOptions = ['id', 'email', 'address', 'phone_number', 'gender', 'birth_date'];
+  const [disclosureOptions, setDisclosureOptions] = useState<string[]>([]);
 
   // Mapping of raw names to display names
   const disclosureLabels: { [key: string]: string } = {
+    name: 'Name',
     id: 'ID',
+    unique_id: 'Unique ID',
     email: 'Email',
     address: 'Address',
     phone_number: 'Phone number',
@@ -194,8 +194,21 @@ const DisclosureForm: React.FC = () => {
     // Update form visibility if both are available
     if (sdjwt && disclosures) {
       setDisclosureFormVisible(true);
+      updateDisclosureOptions(disclosures);
     } else {
       setDisclosureFormVisible(false);
+    }
+  };
+
+  // Update disclosure options based on local storage
+  const updateDisclosureOptions = (disclosures: string) => {
+    try {
+      const disclosuresArray = JSON.parse(disclosures);
+      const options = disclosuresArray.map((item: any) => item.key); // Get the 'key' for each disclosure
+      setDisclosureOptions(options);
+    } catch (error) {
+      console.error('Error parsing disclosures:', error);
+      setDisclosureOptions([]); // Reset to empty if there's an error
     }
   };
 
