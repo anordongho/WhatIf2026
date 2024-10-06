@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 
 // 사용자 입력 폼 컴포넌트
@@ -9,7 +9,6 @@ const UserForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [phone_number, setPhoneNumber] = useState('');
-
   const [gender, setGender] = useState('');
   const [birth_date, setBirthdate] = useState('');
 
@@ -168,7 +167,96 @@ const UserForm: React.FC = () => {
   );
 };
 
+
+const DisclosureForm: React.FC = () => {
+  const [isDisclosureFormVisible, setDisclosureFormVisible] = useState(false);
+
+  const [selectedDisclosures, setSelectedDisclosures] = useState<string[]>([]);
+
+  // Array of disclosable information options
+  const disclosureOptions = ['id', 'email', 'address', 'phone_number', 'gender', 'birth_date'];
+
+  // Mapping of raw names to display names
+  const disclosureLabels: { [key: string]: string } = {
+    id: 'ID',
+    email: 'Email',
+    address: 'Address',
+    phone_number: 'Phone number',
+    gender: 'Gender',
+    birth_date: 'Birth date',
+  };
+
+  // Check localStorage for 'sdjwt' and 'disclosures'
+  const checkLocalStorage = () => {
+    const sdjwt = localStorage.getItem('sdjwt');
+    const disclosures = localStorage.getItem('disclosures');
+
+    // Update form visibility if both are available
+    if (sdjwt && disclosures) {
+      setDisclosureFormVisible(true);
+    } else {
+      setDisclosureFormVisible(false);
+    }
+  };
+
+  // Handle checkbox selection
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+
+    if (event.target.checked) {
+      setSelectedDisclosures([...selectedDisclosures, value]);
+    } else {
+      setSelectedDisclosures(selectedDisclosures.filter(item => item !== value));
+    }
+  };
+
+  const handleDisclosureFormSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    // Submit form logic for disclosures
+  };
+
+  // Run check when component mounts
+  useEffect(() => {
+    checkLocalStorage();
+
+    // Optionally, add event listener for storage changes
+    window.addEventListener('storage', checkLocalStorage);
+
+    return () => {
+      window.removeEventListener('storage', checkLocalStorage);
+    };
+  }, []);
+
+  return (
+    <div>
+      {/* Button to manually trigger localStorage check */}
+      <button onClick={checkLocalStorage}>I've issued my VC!</button>
+
+      {isDisclosureFormVisible ? (
+        <form onSubmit={handleDisclosureFormSubmit}>
+          <label>Information you would like to disclose:</label>
+          {disclosureOptions.map((option, index) => (
+            <div key={index}>
+              <input
+                type="checkbox"
+                id={option}
+                value={option}
+                onChange={handleCheckboxChange}
+              />
+              <label htmlFor={option}>{disclosureLabels[option]}</label>
+            </div>
+          ))}
+          <button type="submit">Submit Disclosures</button>
+        </form>
+      ) : (
+        <p>Please issue a VC first...</p>
+      )}
+    </div>
+  );
+};
+
 // ReactDOM 렌더링
 ReactDOM.render(<React.StrictMode>
   <UserForm />
+  <DisclosureForm />
 </React.StrictMode>, document.getElementById('app'));
