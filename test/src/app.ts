@@ -1,21 +1,17 @@
 import express, { Request, Response } from "express";
-import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
-import { ethers } from 'ethers';
 import path from "path";
-import { Jwt } from "./jwt";
-import type { DisclosureFrame, Signer } from '@sd-jwt/types';
-import { generateSalt, digest } from '@sd-jwt/crypto-nodejs';
-import { unpack, createHashMapping } from '@sd-jwt/decode';
-import { SDJwt, listKeys, pack } from './sdjwt';
-import { deployDID } from "./deploy-did";
-import { publicEncrypt, privateDecrypt, constants, randomBytes } from "crypto";
 
-import { VCInfo, parseToVCInfo } from "./myType";
-import { decodeSdJwtHolder, Holder } from "./holder";
-import { generateKeyPairUtil, generateSignerVerifierUtil, encryptUtil, decryptUtil, generateSymmetricKeyAndIv, encryptDataWithAES, decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptSymmetricKeyWithRSA } from "./crypto-utils";
+import { Holder } from "./holder";
 import { Issuer } from "./issuer";
 
-// import { VCVerifier } from './verifier';
+// import { ethers } from 'ethers';
+// import { deployDID } from "./deploy-did";
+// import { Jwt } from "./jwt";
+// import { generateSalt, digest } from '@sd-jwt/crypto-nodejs';
+// import { unpack, createHashMapping } from '@sd-jwt/decode';
+// import { SDJwt, listKeys, pack } from './sdjwt';
+// import { publicEncrypt, privateDecrypt, constants, randomBytes } from "crypto";
+// import { VCInfo, parseToVCInfo } from "./myType";
 
 const app = express();
 app.use(express.json());
@@ -53,49 +49,19 @@ const verifierKeyPair = {
 // console.log("holder(me) key info: " + JSON.stringify(holderKeyPair));
 // console.log("verifier(선관위) key info: " + JSON.stringify(verifierKeyPair));
 
-const { signer, verifier } = generateSignerVerifierUtil(issuerKeyPair.privateKey, issuerKeyPair.publicKey);
-
-// SD-JWT 생성기 설정
-const sdJwt = new SDJwtVcInstance({
-  signer,
-  verifier,
-  signAlg: 'RS256', // Using RS256 for RSA signature algorithm
-  hasher: digest,   // Assuming digest function is already defined
-  hashAlg: 'SHA-256',
-  saltGenerator: generateSalt, // Assuming saltGenerator is defined
-});
-
 const issuer = new Issuer(issuerKeyPair);
 const holder = new Holder(holderKeyPair);
 
 // JWT 발급 API
 app.post('/issue-vc', async (req: Request, res: Response) => {
   try {
-    const { encryptedPayload } = req.body.payload;
+    const { formContents } = req.body;
 
-    if (!encryptedPayload) {
-      return res.status(400).json({ error: 'Payload is required' });
+    if (!formContents) {
+      return res.status(400).json({ error: 'Form contents are required' });
     }
 
-    // const payload = decryptUtil(encryptedPayload, issuerKeyPair.privateKey);
-
-    // const VC_REGISTRY_ADDRESS = "Seoul National University Bldg 301, Rm 314";
-
-    // const vcInfo: VCInfo = parseToVCInfo(payload, VC_REGISTRY_ADDRESS);
-
-    // const disclosureFrame: DisclosureFrame<typeof vcInfo> = {
-    //   _sd: ['gender', 'birth_date', 'email', 'name', 'phone_number']
-    // };
-
-    // const credential = await sdJwt.issue(
-    //   {
-    //     iss: 'Issuer',
-    //     iat: new Date().getTime(),
-    //     vct: 'ExampleCredentials',
-    //     ...vcInfo,
-    //   },
-    //   disclosureFrame,
-    // )
+    const encryptedPayload = holder.encryptFormContents(formContents);
 
     const credential = await issuer.issueVC(encryptedPayload);
 
@@ -104,9 +70,7 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
 
     // encrypt the encoded sdjwt (credential) - since credential is too big for RSA, we need to use aes
     // Generate AES symmetric key and IV, encrypt the data using symmetric key and IV, encrypt the symmetric key & return. 
-    const { aesKey, iv } = generateSymmetricKeyAndIv();
-    const encryptedCredentialandIV = encryptDataWithAES(credential, aesKey, iv);
-    const encryptedSymmetricKey = encryptSymmetricKeyWithRSA(aesKey, holderKeyPair.publicKey);
+    const { encryptedCredentialandIV, encryptedSymmetricKey } = issuer.encryptCredential(credential);
 
     console.log("encrypted symmetric key original: ", encryptedSymmetricKey)
 
@@ -125,7 +89,7 @@ app.post('/decode-sdjwt', async (req: Request, res: Response) => {
     const { sdjwt } = req.body;
 
     // Decode the SD-JWT using the holder function
-    const decodedSdJwt = await decodeSdJwtHolder(sdjwt);
+    const decodedSdJwt = await holder.decodeSdJwtHolder(sdjwt);
 
     // Send the decoded disclosures back to the client
 
@@ -142,52 +106,11 @@ app.post('/decode-sdjwt', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/encrypt-holder_to_issuer', async (req: Request, res: Response) => {
-
-  try {
-    const { formContents } = req.body;
-
-    if (!formContents) {
-      return res.status(400).json({ error: 'Form contents are required' });
-    }
-
-    const encryptedDataBase64 = holder.encryptFormContents(formContents);
-
-    // Respond with the encrypted data and status 200
-    res.status(200).json({ encryptedData: encryptedDataBase64 });
-
-  } catch (error) {
-    console.error('Error encrypting form contents:', error);
-    res.status(500).json({ error: 'Failed to encrypt form contents' });
-  }
-
-});
-
-app.post('/decrypt-holder', async (req: Request, res: Response) => {
-
-  try {
-    const { encryptedDataBase64 } = req.body;
-
-    const decryptedData = decryptUtil(encryptedDataBase64, holderKeyPair.privateKey);
-
-    // Respond with the encrypted data and status 200
-    res.status(200).json({ decryptedData: decryptedData });
-
-  } catch (error) {
-    console.error('Error while decrypting:', error);
-    res.status(500).json({ error: 'Failed to decrypt the data' });
-  }
-
-});
-
 app.post('/decrypt-holder-aes', async (req: Request, res: Response) => {
-
   try {
     const { encryptedCredentialandIV, encryptedSymmetricKey } = req.body;
 
-    const symmetricKey = decryptSymmetricKeyWithRSA(Buffer.from(encryptedSymmetricKey, 'base64'), holderKeyPair.privateKey);
-
-    const decryptedData = decryptDataWithAES(encryptedCredentialandIV.encryptedData, symmetricKey, Buffer.from(encryptedCredentialandIV.iv, 'base64'));
+    const decryptedData = holder.decryptCredential(encryptedCredentialandIV, encryptedSymmetricKey);
 
     // Respond with the encrypted data and status 200
     res.status(200).json({ sdjwt: decryptedData });
@@ -196,25 +119,4 @@ app.post('/decrypt-holder-aes', async (req: Request, res: Response) => {
     console.error('Error while decrypting:', error);
     res.status(500).json({ error: 'Failed to decrypt the data' });
   }
-
 });
-
-// app.post('/verify-vc', async (req: Request, res: Response) => {
-  
-//   try {
-//     const vcverifier = new VCVerifier(verifierKeyPair);
-
-//     const { encryptedCredentialandIV, encryptedSymmetricKey } = req.body;
-//     const encodedVP = vcverifier.decryptVP(encryptedCredentialandIV, encryptedSymmetricKey);
-//     const verified = sdJwt.verify(encodedVP, ['gender', 'birth_date', 'email', 'name', 'phone_number']);
-
-//     // TODO: check validity of the VC from vcRegistry
-
-//     console.log('verified: ', verified);
-
-//   } catch (error) {
-//     console.error('Error while verifying:', error);
-//     res.status(500).json({ error: 'Failed to verify the data' });
-//   }
-
-// });

@@ -26,24 +26,11 @@ const UserForm: React.FC = () => {
     try {
       // Step 0: encrypt the data
 
-      const encryptionResponse = await fetch('/encrypt-holder_to_issuer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ formContents: { name, id, unique_id, gender, birth_date, email, address, phone_number } }),
-      })
-
-      const encryptedData = await encryptionResponse.json();
-      const encryptedPayload = encryptedData.encryptedData;
-
       // Step 1: Send form data to the server to issue the SD-JWT
       const response = await fetch('/issue-vc', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          payload: { encryptedPayload },
-        }),
+        body: JSON.stringify({ formContents: { name, id, unique_id, gender, birth_date, email, address, phone_number } }),
       });
 
       // Check if issuance was successful
