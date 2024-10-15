@@ -11,9 +11,11 @@ import { deployDID } from "./deploy-did";
 import { publicEncrypt, privateDecrypt, constants, randomBytes } from "crypto";
 
 import { VCInfo, parseToVCInfo } from "./myType";
-import { decodeSdJwtHolder } from "./holder";
+import { decodeSdJwtHolder, Holder } from "./holder";
 import { generateKeyPairUtil, generateSignerVerifierUtil, encryptUtil, decryptUtil, generateSymmetricKeyAndIv, encryptDataWithAES, decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptSymmetricKeyWithRSA } from "./crypto-utils";
+import { Issuer } from "./issuer";
 
+// import { VCVerifier } from './verifier';
 
 const app = express();
 app.use(express.json());
@@ -63,6 +65,9 @@ const sdJwt = new SDJwtVcInstance({
   saltGenerator: generateSalt, // Assuming saltGenerator is defined
 });
 
+const issuer = new Issuer(issuerKeyPair);
+const holder = new Holder(holderKeyPair);
+
 // JWT 발급 API
 app.post('/issue-vc', async (req: Request, res: Response) => {
   try {
@@ -72,25 +77,27 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Payload is required' });
     }
 
-    const payload = decryptUtil(encryptedPayload, issuerKeyPair.privateKey);
+    // const payload = decryptUtil(encryptedPayload, issuerKeyPair.privateKey);
 
-    const VC_REGISTRY_ADDRESS = "Seoul National University Bldg 301, Rm 314";
+    // const VC_REGISTRY_ADDRESS = "Seoul National University Bldg 301, Rm 314";
 
-    const vcInfo: VCInfo = parseToVCInfo(payload, VC_REGISTRY_ADDRESS);
+    // const vcInfo: VCInfo = parseToVCInfo(payload, VC_REGISTRY_ADDRESS);
 
-    const disclosureFrame: DisclosureFrame<typeof vcInfo> = {
-      _sd: ['gender', 'birth_date', 'email', 'name', 'phone_number']
-    };
+    // const disclosureFrame: DisclosureFrame<typeof vcInfo> = {
+    //   _sd: ['gender', 'birth_date', 'email', 'name', 'phone_number']
+    // };
 
-    const credential = await sdJwt.issue(
-      {
-        iss: 'Issuer',
-        iat: new Date().getTime(),
-        vct: 'ExampleCredentials',
-        ...vcInfo,
-      },
-      disclosureFrame,
-    )
+    // const credential = await sdJwt.issue(
+    //   {
+    //     iss: 'Issuer',
+    //     iat: new Date().getTime(),
+    //     vct: 'ExampleCredentials',
+    //     ...vcInfo,
+    //   },
+    //   disclosureFrame,
+    // )
+
+    const credential = await issuer.issueVC(encryptedPayload);
 
     // credential is the encoded sdjwt. 
     // console.log(credential);
@@ -144,7 +151,7 @@ app.post('/encrypt-holder_to_issuer', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Form contents are required' });
     }
 
-    const encryptedDataBase64 = encryptUtil(formContents, issuerKeyPair.publicKey);
+    const encryptedDataBase64 = holder.encryptFormContents(formContents);
 
     // Respond with the encrypted data and status 200
     res.status(200).json({ encryptedData: encryptedDataBase64 });
@@ -192,3 +199,22 @@ app.post('/decrypt-holder-aes', async (req: Request, res: Response) => {
 
 });
 
+// app.post('/verify-vc', async (req: Request, res: Response) => {
+  
+//   try {
+//     const vcverifier = new VCVerifier(verifierKeyPair);
+
+//     const { encryptedCredentialandIV, encryptedSymmetricKey } = req.body;
+//     const encodedVP = vcverifier.decryptVP(encryptedCredentialandIV, encryptedSymmetricKey);
+//     const verified = sdJwt.verify(encodedVP, ['gender', 'birth_date', 'email', 'name', 'phone_number']);
+
+//     // TODO: check validity of the VC from vcRegistry
+
+//     console.log('verified: ', verified);
+
+//   } catch (error) {
+//     console.error('Error while verifying:', error);
+//     res.status(500).json({ error: 'Failed to verify the data' });
+//   }
+
+// });
