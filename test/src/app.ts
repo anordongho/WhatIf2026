@@ -3,6 +3,7 @@ import path from "path";
 
 import { Holder } from "./holder";
 import { Issuer } from "./issuer";
+import { VCVerifier } from "./verifier";
 
 // import { ethers } from 'ethers';
 // import { deployDID } from "./deploy-did";
@@ -51,6 +52,7 @@ const verifierKeyPair = {
 
 const issuer = new Issuer(issuerKeyPair);
 const holder = new Holder(holderKeyPair);
+const vcVerifier = new VCVerifier(verifierKeyPair);
 
 // JWT 발급 API
 app.post('/issue-vc', async (req: Request, res: Response) => {
@@ -67,6 +69,11 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
 
     // credential is the encoded sdjwt. 
     // console.log(credential);
+    
+    // test code: verify the vc using vcVerifier's sdJwtInstance
+    const { payload, header, kb} = await vcVerifier.verifyVC(credential);
+    console.log("verified payload: ", payload);
+
 
     // encrypt the encoded sdjwt (credential) - since credential is too big for RSA, we need to use aes
     // Generate AES symmetric key and IV, encrypt the data using symmetric key and IV, encrypt the symmetric key & return. 
@@ -91,8 +98,6 @@ app.post('/decode-sdjwt', async (req: Request, res: Response) => {
     // Decode the SD-JWT using the holder function
     const decodedSdJwt = await holder.decodeSdJwtHolder(sdjwt);
 
-    // Send the decoded disclosures back to the client
-
     if (decodedSdJwt) {
       // Send the decoded disclosures back to the client
       res.status(200).json({ decodedDisclosures: decodedSdJwt.disclosures });
@@ -112,7 +117,7 @@ app.post('/decrypt-holder-aes', async (req: Request, res: Response) => {
 
     const decryptedData = holder.decryptCredential(encryptedCredentialandIV, encryptedSymmetricKey);
 
-    // Respond with the encrypted data and status 200
+    // Respond with the decrypted data and status 200
     res.status(200).json({ sdjwt: decryptedData });
 
   } catch (error) {

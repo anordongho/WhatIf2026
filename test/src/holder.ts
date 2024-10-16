@@ -26,9 +26,9 @@ export class Holder {
 
     }
     
+    // Decode the SD-JWT using the provided digest
     async decodeSdJwtHolder(sdJwt: string) {
         try {
-            // Decode the SD-JWT using the provided digest
             console.log("Starting decoding...")
             // console.log(sdJwt);
     
@@ -60,6 +60,7 @@ export class Holder {
         return encryptedFormContents;
     }
 
+    // Decrypt the credential (encrypted by issuer) using the holder's private key
     public decryptCredential(encryptedCredentialandIV: any, encryptedSymmetricKey: any) {
         const symmetricKey = decryptSymmetricKeyWithRSA(Buffer.from(encryptedSymmetricKey, 'base64'), this.holderKeyPair.privateKey);
         const decryptedData = decryptDataWithAES(encryptedCredentialandIV.encryptedData, symmetricKey, Buffer.from(encryptedCredentialandIV.iv, 'base64'));
