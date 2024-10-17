@@ -1,3 +1,16 @@
+export type KeyPair = {
+    privateKey: string;
+    publicKey: string;
+};
+
+export type VCEncrypted = {
+    encryptedCredentialandIV: {
+        encryptedData: string;
+        iv: string;
+    };
+    encryptedSymmetricKey: Buffer;
+}
+
 export type VCInfo = {
     name: string;            // Name should be a string
     id: number;              // Unique ID is a number
