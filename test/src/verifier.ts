@@ -1,7 +1,9 @@
 import { generateSignerVerifierUtil, encryptUtil, decryptUtil, generateSymmetricKeyAndIv, encryptDataWithAES, decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptSymmetricKeyWithRSA } from "./crypto-utils";
 import { sign, verify } from 'crypto';
 import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
-import { generateSalt, digest } from '@sd-jwt/crypto-nodejs';
+import { generateSalt, digest, ES256 } from '@sd-jwt/crypto-nodejs';
+import { ethers } from 'ethers';
+import { KeyPair } from "./myType";
 
 const requiredClaimKeys = ['birth_date'];
 
@@ -9,19 +11,20 @@ const issuerKeyPair = {
     privateKey: "-----BEGIN PRIVATE KEY-----\nthisisadummyprivatekey\n-----END PRIVATE KEY-----\n",
     publicKey: "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0MY+oiDyL75FjhwkhT9D\nbdBy8ICMCxTbi3KcpEZweb59ahodD61+/GGVtlMH3hMu8Z19nss/vP8kZijv5PjY\nmbHqVR+LEA5UE5asnW4EMOpnWh17ZLa0X2fJ7tK+HZtyRdWLZbqLwsioxjhguN9L\nHD4cMqsxzK8oC+ibQlC7wKoDQ+lyBQOQsW2l4dTLO87+n68D4gg4PlSy8gq0cGmG\n/V7m/TcHf15bcda19QftA7+AtY76w4NcNHV4PzfQv/lg586E8nI5BvmJzGPASdjZ\nW9G8o42k4xNczVvLWXLoIgPMyw3aqEUeVpF5NMT43JMeumNiU5G1QNfYMu1yKpnx\nnwIDAQAB\n-----END PUBLIC KEY-----\n"
 };
+const { signer, verifier } = generateSignerVerifierUtil(issuerKeyPair.privateKey, issuerKeyPair.publicKey);
 
-const signer = (data: string): string => {
-    const signature = sign('sha256', Buffer.from(data), issuerKeyPair.privateKey);
-    return signature.toString('base64url');
-};
+// const signer = (data: string): string => {
+//     const signature = sign('sha256', Buffer.from(data), issuerKeyPair.privateKey);
+//     return signature.toString('base64url');
+// };
 
-const verifier = (data: string, signature: string): boolean => {
-    return verify('sha256', Buffer.from(data), issuerKeyPair.publicKey, Buffer.from(signature, 'base64url'));
-};
+// const verifier = (data: string, signature: string): boolean => {
+//     return verify('sha256', Buffer.from(data), issuerKeyPair.publicKey, Buffer.from(signature, 'base64url'));
+// };
 
 export class VCVerifier {
-    private verifierKeyPair: any;
-    private sdJwt = new SDJwtVcInstance({
+    private verifierKeyPair: KeyPair;
+    private vcSignVerifier = new SDJwtVcInstance({
         signer,
         verifier,
         signAlg: 'RS256', // Using RS256 for RSA signature algorithm
@@ -30,7 +33,7 @@ export class VCVerifier {
         saltGenerator: generateSalt, // Assuming saltGenerator is defined
     });
 
-    constructor(verifierKeyPair: any) {
+    constructor(verifierKeyPair: KeyPair) {
         this.verifierKeyPair = verifierKeyPair;
     }
 
@@ -47,8 +50,8 @@ export class VCVerifier {
         return decryptedData;
     }
 
-    verifyVC(encodedVP: string) {
-        return this.sdJwt.verify(encodedVP, requiredClaimKeys);
+    verifyVC(encodedVC: string) {
+        return this.vcSignVerifier.verify(encodedVC, requiredClaimKeys);
     }
 
     // Check signature of holder in vp

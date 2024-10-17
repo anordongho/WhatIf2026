@@ -36,15 +36,13 @@ const UserForm: React.FC = () => {
       // Check if issuance was successful
       if (response.status === 200) {
         const data = await response.json();
-        const { encryptedCredentialandIV, encryptedSymmetricKey } = data;
+        const vcEncrypted = data;
 
         // Decrypt the response
         const sdjwtResponse = await fetch('/decrypt-holder-aes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            encryptedCredentialandIV, encryptedSymmetricKey
-          }),
+          body: JSON.stringify(vcEncrypted),
         });
 
         if (sdjwtResponse.ok) {

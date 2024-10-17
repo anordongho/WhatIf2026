@@ -67,6 +67,10 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
 
     const credential = await issuer.issueVC(encryptedPayload);
 
+    if (!credential) {
+      return res.status(500).json({ error: 'Failed to issue VC' });
+    }
+
     // credential is the encoded sdjwt. 
     // console.log(credential);
     
@@ -77,11 +81,11 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
 
     // encrypt the encoded sdjwt (credential) - since credential is too big for RSA, we need to use aes
     // Generate AES symmetric key and IV, encrypt the data using symmetric key and IV, encrypt the symmetric key & return. 
-    const { encryptedCredentialandIV, encryptedSymmetricKey } = issuer.encryptCredential(credential);
+    const vcEncrypted = issuer.encryptCredential(credential);
 
-    console.log("encrypted symmetric key original: ", encryptedSymmetricKey)
+    console.log("encrypted symmetric key original: ", vcEncrypted.encryptedSymmetricKey)
 
-    return res.status(200).json({ encryptedCredentialandIV, encryptedSymmetricKey });
+    return res.status(200).json(vcEncrypted);
 
   } catch (error) {
     console.error('Error issuing JWT:', error);
@@ -96,7 +100,7 @@ app.post('/decode-sdjwt', async (req: Request, res: Response) => {
     const { sdjwt } = req.body;
 
     // Decode the SD-JWT using the holder function
-    const decodedSdJwt = await holder.decodeSdJwtHolder(sdjwt);
+    const decodedSdJwt = await holder.decodeVC(sdjwt);
 
     if (decodedSdJwt) {
       // Send the decoded disclosures back to the client
@@ -113,9 +117,9 @@ app.post('/decode-sdjwt', async (req: Request, res: Response) => {
 
 app.post('/decrypt-holder-aes', async (req: Request, res: Response) => {
   try {
-    const { encryptedCredentialandIV, encryptedSymmetricKey } = req.body;
+    const vcEncrypted = req.body;
 
-    const decryptedData = holder.decryptCredential(encryptedCredentialandIV, encryptedSymmetricKey);
+    const decryptedData = holder.decryptCredential(vcEncrypted);
 
     // Respond with the decrypted data and status 200
     res.status(200).json({ sdjwt: decryptedData });
