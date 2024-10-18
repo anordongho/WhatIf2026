@@ -129,3 +129,21 @@ app.post('/decrypt-holder-aes', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to decrypt the data' });
   }
 });
+
+// based on the selections, holder makes vp (doesn't present it yet)
+app.post('/make-vp', async (req: Request, res: Response) => {
+  try {
+    // get the selection information(presentation frame) & sdjwt(encoded) from request, 
+    // make presentation and signature & return. 
+    const selections = req.body.selections;
+    const sdjwt = req.body.sdjwt;
+
+    const vp = await holder.makeVP(sdjwt, selections)
+    console.log("the result vp: ", vp);
+    res.status(200).json({ vp: vp });
+
+  } catch (error) {
+    console.error('Error while making VP:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});

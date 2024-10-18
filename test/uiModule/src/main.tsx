@@ -9,6 +9,8 @@ const VotingApp = () => {
   const [isIssuingVC, setIsIssuingVC] = useState(false);
   const [isPresentingVP, setIsPresentingVP] = useState(false);
   const [hasSdJwt, setHasSdJwt] = useState(false);  // To check if SD-JWT is present in local storage
+  const [sdjwt, setSdjwt] = useState('');
+
   const [vcData, setVcData] = useState({
     name: '',
     id: '',
@@ -153,6 +155,30 @@ const VotingApp = () => {
     e.preventDefault();
 
     console.log(vpData) // checkbox values (true or false)
+
+    try {
+      // make the vc
+      const response = await fetch('/make-vp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ selections: vpData, sdjwt: sdjwt }),
+      });
+
+      // Check if issuance was successful
+      if (response.status === 200) {
+        const data = await response.json();
+        console.log("yey~")
+
+
+      } else {
+        setErrorMessage('Failed to make the vp');
+      }
+
+    } catch (error) {
+      setErrorMessage('Error occurred while making vp.');
+      console.error('Error:', error);
+    }
+
     setIsPresentingVP(true);
 
     // search local storage for vc and add appropriate ~ values. 
@@ -185,6 +211,7 @@ const VotingApp = () => {
     // Update form visibility if both are available
     if (sdjwt && disclosures) {
       setHasSdJwt(true);
+      setSdjwt(sdjwt.replace(/^"|"$/g, ''));
     } else {
       setHasSdJwt(false);
     }

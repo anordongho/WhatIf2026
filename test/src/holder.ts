@@ -2,7 +2,7 @@ import { decodeSdJwt, getClaims } from '@sd-jwt/decode';
 import { digest, generateSalt } from '@sd-jwt/crypto-nodejs';
 import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
 import { decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptUtil, generateSignerVerifierUtil } from './crypto-utils';
-import { KeyPair, VCEncrypted } from './myType';
+import { KeyPair, VCEncrypted, VPInfo } from './myType';
 // import {
 //     type PresentationFrame,
 //     type SDJWTCompact,
@@ -32,33 +32,48 @@ export class Holder {
     public receiveVC(sdjwt: any) {
 
     }
-    
+
     // Decode the SD-JWT using the provided digest
     async decodeVC(sdJwt: string) {
         try {
-            console.log("Starting decoding...")
+            // console.log("Starting decoding...")
             // console.log(sdJwt);
-    
+
             const decodedSdJwt = await decodeSdJwt(sdJwt, digest);
-    
+
             // Log the decoded disclosures
-            console.log('The decoded Disclosures are:');
-            console.log(JSON.stringify(decodedSdJwt.disclosures, null, 2));
-    
-    
+            // console.log('The decoded Disclosures are:');
+            // console.log(JSON.stringify(decodedSdJwt.disclosures, null, 2));
+
+
             const claims = await getClaims(
                 decodedSdJwt.jwt.payload,
                 decodedSdJwt.disclosures,
                 digest,
             );
-    
+
             console.log('The claims are:'); // the full vc
             console.log(JSON.stringify(claims, null, 2));
-    
+
             return decodedSdJwt;
         } catch (error) {
             console.error('Error decoding SD-JWT:', error);
         }
+    }
+
+    // make the VP based on selected options
+    async makeVP(credential: string, presentationFrame: Record<string, boolean>): Promise<VPInfo> {
+
+        const presentation = await this.sdJwtVcInstance.present(credential, presentationFrame);
+
+        console.log("presentation in makevp", presentation);
+        const holderSignature = "dummy";
+
+        // Return the VPInfo object
+        return {
+            sdjwt: presentation,
+            holder_signature: holderSignature // Signature proving holder's action
+        };
     }
 
     public encryptFormContents(formContents: any) {

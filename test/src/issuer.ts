@@ -6,6 +6,8 @@ import { KeyPair, VCEncrypted, VCInfo, parseToVCInfo } from './myType';
 
 const holderPublicKey = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxr1MtIoqYujusHIG54d9\nhFOIrOdG9B1HL3k8iazIGqU3eXhZNzgfutfwrWglsV+apXbTGDivLmFOZNXvhmc9\nWDmAng5p056qQG9OCDXQ2Vt4NLGHk5kRgR0nJZfjdkXZLrGCoc9q49jLzxeRJDSV\nm7IWlxNdzbZlEG7AJrK8jfZE2K69ARXqukbUubrvuDLj0BCiSRmCuRs7Q0iD5iFz\nToSXzcOO0WOcqtUGQXPjbBMP2hV8gbJZLA+bfdznxAp9vaubJ0mu/NFAPE8VprQa\n5sP5hiS9HFhvtfmJpYaae4fahegt11Bn27RwU1fVKIdvpg4cLaaalEn0aPMERDDS\nyQIDAQAB\n-----END PUBLIC KEY-----\n";
 
+const selectively_disclosable: Array<keyof VCInfo> = ['name', 'id', 'unique_id', 'email', 'address', 'phone_number', 'gender', 'birth_date', 'citizenship'];
+
 export class Issuer {
     private issuerKeyPair: KeyPair;
     private sdJwtVcInstance: SDJwtVcInstance;
@@ -27,13 +29,13 @@ export class Issuer {
         try {
             const payload = decryptUtil(encryptedPayload, this.issuerKeyPair.privateKey);
             const VC_REGISTRY_ADDRESS = "Seoul National University Bldg 301, Rm 314";
-    
+
             const vcInfo: VCInfo = parseToVCInfo(payload, VC_REGISTRY_ADDRESS);
-    
+
             const disclosureFrame: DisclosureFrame<typeof vcInfo> = {
-                _sd: ['gender', 'birth_date', 'email', 'name', 'phone_number']
+                _sd: selectively_disclosable
             };
-    
+
             const credential = await this.sdJwtVcInstance.issue(
                 {
                     iss: 'Issuer',
@@ -49,7 +51,7 @@ export class Issuer {
             }
 
             // register the VC to the vc_registry
-    
+
             return credential;
         } catch (error) {
             console.error('Error issuing VC:', error);
