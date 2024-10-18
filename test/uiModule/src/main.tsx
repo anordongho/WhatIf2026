@@ -9,6 +9,8 @@ const VotingApp = () => {
   const [isIssuingVC, setIsIssuingVC] = useState(false);
   const [isPresentingVP, setIsPresentingVP] = useState(false);
   const [hasSdJwt, setHasSdJwt] = useState(false);  // To check if SD-JWT is present in local storage
+  const [hasLocalVP, setHasLocalVP] = useState(false);  // To check if SD-JWT is present in local storage
+
   const [sdjwt, setSdjwt] = useState('');
 
   const [vcData, setVcData] = useState({
@@ -63,7 +65,7 @@ const VotingApp = () => {
     setMessage('');
   }, [currentSection]);
 
-  const handleVoterIdSubmit = async (e: React.FormEvent) => {
+  const handleVPSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsVerifying(true);
     setTimeout(() => {
@@ -224,6 +226,13 @@ const VotingApp = () => {
     }
   };
 
+  const handleLocalVpCheck = () => {
+    const vp = localStorage.getItem('VP');
+
+    if (vp) setHasLocalVP(true);
+    else setHasLocalVP(false);
+  }
+
   const NavButton = ({ section, label }: { section: string; label: string }) => (
     <button
       onClick={() => {
@@ -236,10 +245,12 @@ const VotingApp = () => {
     </button>
   );
 
-  const SubmitButton = ({ label }: { label: string }) => (
+  const SubmitButton = ({ label, disabled = false }: { label: string; disabled?: boolean }) => (
     <button
       type="submit"
-      className="bg-[#ffa600] text-white p-3 rounded-md w-full text-lg font-sans font-bold hover:bg-[#cc8500] transition-colors duration-300"
+      disabled={disabled}
+      className={`bg-[#f78400] text-white p-3 rounded-md w-full text-lg font-sans font-bold 
+        ${disabled ? 'bg-gray-400 cursor-not-allowed' : 'hover:bg-[#cd812a] transition-colors duration-300'}`}
     >
       {label}
     </button>
@@ -279,15 +290,15 @@ const VotingApp = () => {
               <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>Verify your right to vote</h2>
 
               {!isVoterVerified && (
-                <form onSubmit={handleVoterIdSubmit} className="mb-4">
-                  <input
-                    type="text"
-                    value={voterId}
-                    onChange={(e) => setVoterId(e.target.value)}
-                    placeholder="ENTER YOUR VP CODE"
-                    className="bg-white text-black p-3 w-full mb-4 rounded-md font-sans text-lg"
-                  />
-                  <SubmitButton label="VERIFY" />
+                <form onSubmit={handleVPSubmit} className="mb-4">
+                  <button
+                    type="button"
+                    onClick={handleLocalVpCheck} // Add your local VP check logic here
+                    className="bg-[#ffa600] text-white p-3 w-full mb-4 rounded-md font-sans text-lg "
+                  >
+                    Look for Local VPs
+                  </button>
+                  <SubmitButton label="VERIFY" disabled={!hasLocalVP} />
                 </form>
               )}
 
