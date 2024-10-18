@@ -38,7 +38,8 @@ const VotingApp = () => {
   const [vote, setVote] = useState('');
   const [message, setMessage] = useState('');
   const [vcCode, setVcCode] = useState('');
-  const [vpCode, setVpCode] = useState('');
+  // const [vpCode, setVpCode] = useState('');
+  const [isVPGenerated, setIsVPGenerated] = useState(false);
   const [isVoteSubmitted, setIsVoteSubmitted] = useState(false);
   const [loadingDots, setLoadingDots] = useState('');
 
@@ -155,6 +156,7 @@ const VotingApp = () => {
     e.preventDefault();
 
     console.log(vpData) // checkbox values (true or false)
+    setIsPresentingVP(true);
 
     try {
       // make the vc
@@ -169,8 +171,13 @@ const VotingApp = () => {
         const data = await response.json();
         const { vp } = data
 
-        console.log("received vp : ", vp)
+        console.log("successfully received vp : ", vp)
 
+        localStorage.setItem('VP', JSON.stringify(vp));
+
+        setIsPresentingVP(false);
+        setIsVPGenerated(true);
+        setMessage('VP generated successfully, and saved locally');
 
 
       } else {
@@ -182,16 +189,13 @@ const VotingApp = () => {
       console.error('Error:', error);
     }
 
-    setIsPresentingVP(true);
 
-    // search local storage for vc and add appropriate ~ values. 
-
-    setTimeout(() => {
-      const exampleVpCode = '0xadc99f9a8b8d78' + Math.random().toString(36).substring(2, 15);
-      setVpCode(exampleVpCode);
-      setIsPresentingVP(false);
-      setMessage('VP generated successfully.');
-    }, 5000);
+    // setTimeout(() => {
+    //   const exampleVpCode = '0xadc99f9a8b8d78' + Math.random().toString(36).substring(2, 15);
+    //   setVpCode(exampleVpCode);
+    //   setIsPresentingVP(false);
+    //   setMessage('VP generated successfully.');
+    // }, 5000);
   };
 
   const handleVoteSubmit = async (e: React.FormEvent) => {
@@ -226,7 +230,7 @@ const VotingApp = () => {
         setCurrentSection(section);
         setMessage(''); // 네비게이션 시 메시지 초기화
       }}
-      className="text-[#ffa600] hover:text-white transition-colors duration-300 text-sm mr-4"
+      className="text-[#ffa600] hover:text-white transition-colors duration-300 text-sm mr-4 py-2"
     >
       {label}
     </button>
@@ -373,7 +377,7 @@ const VotingApp = () => {
                       <label className="text-lg">{key.charAt(0).toUpperCase() + key.slice(1)}</label>
                     </div>
                   ))}
-                  <SubmitButton label="GENERATE VP" />
+                  <SubmitButton label={isVPGenerated ? "REGENERATE VP" : "GENERATE VP"} />
                 </form>
               ) : (
                 // Show the error message if SD-JWT is not found
@@ -388,23 +392,11 @@ const VotingApp = () => {
                 <div className="mt-4 text-[#ffa600]">{message}</div>
               )}
 
-              {vpCode && (
+              {isVPGenerated && (
                 <div className="mt-6">
-                  <h3 className="text-2xl font-bold mb-2" style={{ color: '#ffa600' }}>Your VP code is</h3>
-                  <div className="bg-white text-black p-3 rounded-md font-mono text-lg break-all relative">
-                    {vpCode}
-                    <button className="absolute right-2 bottom-2 text-gray-500 hover:text-gray-700">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                      </svg>
-                    </button>
-                  </div>
+                  <h4 className="text-2xl font-bold mb-2" style={{ color: '#ffa600' }}>You can now use this VP to verify yourself! (Or you can also generate another VP)</h4>
                 </div>
               )}
-
-
-
 
             </>
 
