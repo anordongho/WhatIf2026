@@ -10,16 +10,26 @@ const VotingApp = () => {
   const [isPresentingVP, setIsPresentingVP] = useState(false);
   const [vcData, setVcData] = useState({
     name: '',
-    age: '',
+    id: '',
+    unique_id: '',
+    email: '',
     address: '',
+    phone_number: '',
+
     gender: '',
+    birth_date: '',
     citizenship: '',
   });
   const [vpData, setVpData] = useState({
     name: false,
-    age: false,
+    id: false,
+    unique_id: false,
+    email: false,
     address: false,
+    phone_number: false,
+
     gender: false,
+    birth_date: false,
     citizenship: false,
   });
   const [vote, setVote] = useState('');
@@ -28,6 +38,11 @@ const VotingApp = () => {
   const [vpCode, setVpCode] = useState('');
   const [isVoteSubmitted, setIsVoteSubmitted] = useState(false);
   const [loadingDots, setLoadingDots] = useState('');
+
+  const [vcMessage, setVcMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [sdJwtObject, setSdJwtObject] = useState<object | null>(null);
+  const [disclosureobject, setDisclosureObject] = useState<object | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -57,16 +72,92 @@ const VotingApp = () => {
   const handleVcSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsIssuingVC(true);
-    setTimeout(() => {
-      const exampleVcCode = '0xadc99f9a8b8d78' + Math.random().toString(36).substring(2, 15);
-      setVcCode(exampleVcCode);
-      setIsIssuingVC(false);
-      setMessage('VC issued successfully.');
-    }, 5000);
+
+    // Log form data
+    console.log(vcData);
+
+    try {
+      // Step 0: encrypt the data
+
+      // Step 1: Send form data to the server to issue the SD-JWT
+      const response = await fetch('/issue-vc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ formContents: vcData }),
+      });
+
+      // Check if issuance was successful
+      if (response.status === 200) {
+        const data = await response.json();
+        const vcEncrypted = data;
+
+        // Decrypt the response
+        const sdjwtResponse = await fetch('/decrypt-holder-aes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(vcEncrypted),
+        });
+
+        if (sdjwtResponse.ok) {
+          const sdjwtData = await sdjwtResponse.json();
+          const { sdjwt } = sdjwtData;
+
+          localStorage.setItem('sdjwt', JSON.stringify(sdjwt));
+
+          // Step 2: Send request to decode the encoded SD-JWT
+          const disclosuresResponse = await fetch('/decode-sdjwt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sdjwt,
+            }),
+          });
+
+          if (disclosuresResponse.ok) {
+            const disclosuresData = await disclosuresResponse.json();
+            const { decodedDisclosures } = disclosuresData;
+
+            localStorage.setItem('disclosures', JSON.stringify(decodedDisclosures));
+
+            // Step 3: Display the decoded SD-JWT disclosures
+            setVcMessage(`Here's your selectively disclosable VC! We've made it so that you can choose to hide anything that you want, except the issuance time.\n\n`);
+
+
+            setVcCode(sdjwt)
+            setIsIssuingVC(false);
+            setMessage('VC issued successfully.');
+
+            setDisclosureObject(decodedDisclosures);  // Store the decoded SD-JWT disclosures part for display
+            console.log(decodedDisclosures);
+          } else {
+            setErrorMessage('Failed to decode SD-JWT from the server.');
+          }
+
+        } else {
+          setErrorMessage('Failed to decrypt the given data.');
+        }
+
+      } else {
+        setErrorMessage('Failed to fetch SD-JWT from the server.');
+      }
+
+    } catch (error) {
+      setErrorMessage('Error occurred while fetching data.');
+      console.error('Error:', error);
+    }
+
+    // setTimeout(() => {
+    //   const exampleVcCode = '0xadc99f9a8b8d78' + Math.random().toString(36).substring(2, 15);
+    //   setVcCode(exampleVcCode);
+    //   setIsIssuingVC(false);
+    //   setMessage('VC issued successfully.');
+    // }, 5000);
   };
 
   const handleVpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    console.log(vpData)
     setIsPresentingVP(true);
     setTimeout(() => {
       const exampleVpCode = '0xadc99f9a8b8d78' + Math.random().toString(36).substring(2, 15);
@@ -101,8 +192,8 @@ const VotingApp = () => {
   );
 
   const SubmitButton = ({ label }: { label: string }) => (
-    <button 
-      type="submit" 
+    <button
+      type="submit"
       className="bg-[#ffa600] text-white p-3 rounded-md w-full text-lg font-sans font-bold hover:bg-[#cc8500] transition-colors duration-300"
     >
       {label}
@@ -124,7 +215,7 @@ const VotingApp = () => {
         <NavButton section="vc" label="VC Issue" />
         <NavButton section="vp" label="VP Generate" />
       </nav>
-      
+
       <div className="flex-grow flex items-center justify-center">
         <div className="max-w-md w-full px-6 py-8">
           {isVerifying ? (
@@ -141,7 +232,7 @@ const VotingApp = () => {
             <>
               <h1 className="text-2xl mb-2">Be a part of decision</h1>
               <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>Verify your right to vote</h2>
-              
+
               {!isVoterVerified && (
                 <form onSubmit={handleVoterIdSubmit} className="mb-4">
                   <input
@@ -187,7 +278,7 @@ const VotingApp = () => {
                     key={key}
                     type="text"
                     value={vcData[key as keyof typeof vcData]}
-                    onChange={(e) => setVcData({...vcData, [key]: e.target.value})}
+                    onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
                     placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
                     className="bg-white text-black p-3 w-full mb-4 rounded-md font-sans text-lg"
                   />
@@ -221,7 +312,7 @@ const VotingApp = () => {
                     <input
                       type="checkbox"
                       checked={vpData[key as keyof typeof vpData]}
-                      onChange={(e) => setVpData({...vpData, [key]: e.target.checked})}
+                      onChange={(e) => setVpData({ ...vpData, [key]: e.target.checked })}
                       className="mr-2"
                     />
                     <label className="text-lg">{key.charAt(0).toUpperCase() + key.slice(1)}</label>
