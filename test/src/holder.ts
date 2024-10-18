@@ -1,6 +1,9 @@
 import { decodeSdJwt, getClaims } from '@sd-jwt/decode';
 import { digest, generateSalt } from '@sd-jwt/crypto-nodejs';
 import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
+
+import { sign, verify } from 'crypto';
+
 import { decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptUtil, generateSignerVerifierUtil } from './crypto-utils';
 import { KeyPair, VCEncrypted, VPInfo } from './myType';
 // import {
@@ -36,15 +39,8 @@ export class Holder {
     // Decode the SD-JWT using the provided digest
     async decodeVC(sdJwt: string) {
         try {
-            // console.log("Starting decoding...")
-            // console.log(sdJwt);
 
             const decodedSdJwt = await decodeSdJwt(sdJwt, digest);
-
-            // Log the decoded disclosures
-            // console.log('The decoded Disclosures are:');
-            // console.log(JSON.stringify(decodedSdJwt.disclosures, null, 2));
-
 
             const claims = await getClaims(
                 decodedSdJwt.jwt.payload,
@@ -67,7 +63,13 @@ export class Holder {
         const presentation = await this.sdJwtVcInstance.present(credential, presentationFrame);
 
         console.log("presentation in makevp", presentation);
-        const holderSignature = "dummy";
+
+        const holderSignature = sign(null, Buffer.from(presentation), this.holderKeyPair.privateKey);
+
+        const verifyResult = verify(null, Buffer.from(presentation), this.holderKeyPair.publicKey, holderSignature);
+
+        console.log("holder's signature", holderSignature);
+        console.log("verify result: ", verifyResult);
 
         // Return the VPInfo object
         return {

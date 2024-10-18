@@ -27,7 +27,7 @@ export type VCInfo = {
 
 export type VPInfo = {
     sdjwt: string;
-    holder_signature: string;
+    holder_signature: Buffer;
 }
 
 export function parseToVCInfo(userInput: {

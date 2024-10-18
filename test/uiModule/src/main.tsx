@@ -167,7 +167,10 @@ const VotingApp = () => {
       // Check if issuance was successful
       if (response.status === 200) {
         const data = await response.json();
-        console.log("yey~")
+        const { vp } = data
+
+        console.log("received vp : ", vp)
+
 
 
       } else {
