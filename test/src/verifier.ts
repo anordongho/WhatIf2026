@@ -13,15 +13,6 @@ const issuerKeyPair = {
 };
 const { signer, verifier } = generateSignerVerifierUtil(issuerKeyPair.privateKey, issuerKeyPair.publicKey);
 
-// const signer = (data: string): string => {
-//     const signature = sign('sha256', Buffer.from(data), issuerKeyPair.privateKey);
-//     return signature.toString('base64url');
-// };
-
-// const verifier = (data: string, signature: string): boolean => {
-//     return verify('sha256', Buffer.from(data), issuerKeyPair.publicKey, Buffer.from(signature, 'base64url'));
-// };
-
 export class VCVerifier {
     private verifierKeyPair: KeyPair;
     private vcSignVerifier = new SDJwtVcInstance({
@@ -40,7 +31,7 @@ export class VCVerifier {
     // get holder's public key from vc_registry using vc_registry_address
 
     // Decrypt vp with verifier's private key
-    decryptVP(encryptedCredentialandIV: any, encryptedSymmetricKey: any) {
+    public decryptVP(encryptedCredentialandIV: any, encryptedSymmetricKey: any) {
         const symmetricKey = decryptSymmetricKeyWithRSA(Buffer.from(encryptedSymmetricKey, 'base64'), this.verifierKeyPair.privateKey);
         const decryptedData = decryptDataWithAES(encryptedCredentialandIV.encryptedData, symmetricKey, Buffer.from(encryptedCredentialandIV.iv, 'base64'));
         // decryptedData is the encoded vp(string)
@@ -50,13 +41,15 @@ export class VCVerifier {
         return decryptedData;
     }
 
-    verifyVC(encodedVC: string) {
+    // Check signature of holder in vp
+    public verifyHolderSign(encodedVP: string) {
+
+    }
+
+    public verifyVC(encodedVC: string) {
         return this.vcSignVerifier.verify(encodedVC, requiredClaimKeys);
     }
 
-    // Check signature of holder in vp
-
     // Find issuer's public key and issue history from vc_registry
-
-    // Verify vc with issuer's public key
+    
 }
