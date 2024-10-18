@@ -9,7 +9,7 @@ export type VCEncrypted = {
         iv: string;
     };
     encryptedSymmetricKey: Buffer;
-}
+};
 
 export type VCInfo = {
     name: string;            // Name should be a string
@@ -22,7 +22,13 @@ export type VCInfo = {
     phone_number: string;    // Phone number is a string
     issuance_date: Date;         // Timestamp is a Date object
     vc_registry_address: string;  // Additional server address, a string
+    citizenship: string;
 };
+
+export type VPInfo = {
+    sdjwt: string;
+    holder_signature: string;
+}
 
 export function parseToVCInfo(userInput: {
     name: string;
@@ -33,6 +39,7 @@ export function parseToVCInfo(userInput: {
     email: string;
     address: string;
     phone_number: string;
+    citizenship: string;
 }, vc_registry_address: string): VCInfo {
     // Get the current timestamp as a Date object
     const issuance_date = new Date();
@@ -55,6 +62,7 @@ export function parseToVCInfo(userInput: {
         address: userInput.address,
         phone_number: userInput.phone_number,
         issuance_date: issuance_date,
-        vc_registry_address: vc_registry_address
+        vc_registry_address: vc_registry_address,
+        citizenship: userInput.citizenship
     };
 }
