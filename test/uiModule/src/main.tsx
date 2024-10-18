@@ -66,13 +66,45 @@ const VotingApp = () => {
   }, [currentSection]);
 
   const handleVPSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault();
-    setIsVerifying(true);
-    setTimeout(() => {
-      setIsVerifying(false);
-      setIsVoterVerified(true);
-      setMessage('Verification successful. You can now vote.');
-    }, 5000);
+
+    try {
+      // 0. fetch vp from local storage
+      // 1. encrypt the data
+      // 2. send it to verifier
+      // 3. wait for the response, and if successfully verified, update ui components(setIsVerifying, setIsVoterVerified, setMessage..)
+
+      const VP = localStorage.getItem('VP');
+      // make the vc
+      const response = await fetch('/make-vp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vp: VP }),
+      });
+
+      // Check if issuance was successful
+      if (response.status === 200) {
+        const data = await response.json();
+
+        // if true: success / else something wrong with vp or not eligible for votes
+
+
+      } else {
+        setErrorMessage('Failed to send the VP');
+      }
+
+    } catch (error) {
+      setErrorMessage('Error occurred while sending & verifying VP.');
+      console.error('Error:', error);
+    }
+
+    // setIsVerifying(true);
+    // setTimeout(() => {
+    //   setIsVerifying(false);
+    //   setIsVoterVerified(true);
+    //   setMessage('Verification successful. You can now vote.');
+    // }, 5000);
   };
 
   const handleVcSubmit = async (e: React.FormEvent) => {
@@ -293,10 +325,10 @@ const VotingApp = () => {
                 <form onSubmit={handleVPSubmit} className="mb-4">
                   <button
                     type="button"
-                    onClick={handleLocalVpCheck} // Add your local VP check logic here
+                    onClick={handleLocalVpCheck}
                     className="bg-[#ffa600] text-white p-3 w-full mb-4 rounded-md font-sans text-lg "
                   >
-                    Look for Local VPs
+                    Look for Locally Stored VPs
                   </button>
                   <SubmitButton label="VERIFY" disabled={!hasLocalVP} />
                 </form>
