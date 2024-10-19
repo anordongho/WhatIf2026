@@ -1,8 +1,8 @@
 import type { DisclosureFrame } from '@sd-jwt/types';
 import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
 import { generateSalt, digest } from '@sd-jwt/crypto-nodejs';
-import { decryptUtil, encryptDataWithAES, encryptSymmetricKeyWithRSA, generateSignerVerifierUtil, generateSymmetricKeyAndIv } from './crypto-utils';
-import { KeyPair, VCEncrypted, VCInfo, parseToVCInfo } from './myType';
+import { decryptDataWithAES, decryptSymmetricKeyWithRSA, decryptUtil, encryptDataWithAES, encryptSymmetricKeyWithRSA, generateSignerVerifierUtil, generateSymmetricKeyAndIv } from './crypto-utils';
+import { KeyPair, VCEncrypted, VCInfo, VPEncrypted, VPInfo, parseToVCInfo } from './myType';
 
 const holderPublicKey = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxr1MtIoqYujusHIG54d9\nhFOIrOdG9B1HL3k8iazIGqU3eXhZNzgfutfwrWglsV+apXbTGDivLmFOZNXvhmc9\nWDmAng5p056qQG9OCDXQ2Vt4NLGHk5kRgR0nJZfjdkXZLrGCoc9q49jLzxeRJDSV\nm7IWlxNdzbZlEG7AJrK8jfZE2K69ARXqukbUubrvuDLj0BCiSRmCuRs7Q0iD5iFz\nToSXzcOO0WOcqtUGQXPjbBMP2hV8gbJZLA+bfdznxAp9vaubJ0mu/NFAPE8VprQa\n5sP5hiS9HFhvtfmJpYaae4fahegt11Bn27RwU1fVKIdvpg4cLaaalEn0aPMERDDS\nyQIDAQAB\n-----END PUBLIC KEY-----\n";
 

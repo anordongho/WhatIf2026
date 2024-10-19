@@ -30,6 +30,14 @@ export type VPInfo = {
     holder_signature: Buffer;
 }
 
+export type VPEncrypted = {
+    encryptedVPandIV: {
+        encryptedData: string;
+        iv: string;
+    };
+    encryptedSymmetricKey: Buffer;
+};
+
 export function parseToVCInfo(userInput: {
     name: string;
     id: string;          // ID might come as a string from user input

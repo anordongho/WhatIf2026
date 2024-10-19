@@ -4,8 +4,8 @@ import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
 
 import { sign, verify } from 'crypto';
 
-import { decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptUtil, generateSignerVerifierUtil } from './crypto-utils';
-import { KeyPair, VCEncrypted, VPInfo } from './myType';
+import { decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptDataWithAES, encryptSymmetricKeyWithRSA, encryptUtil, generateSignerVerifierUtil, generateSymmetricKeyAndIv } from './crypto-utils';
+import { KeyPair, VCEncrypted, VPEncrypted, VPInfo } from './myType';
 // import {
 //     type PresentationFrame,
 //     type SDJWTCompact,
@@ -13,6 +13,9 @@ import { KeyPair, VCEncrypted, VPInfo } from './myType';
 
 // TODO: get issuer's public key from the webpage.
 const issuerPublicKey = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0MY+oiDyL75FjhwkhT9D\nbdBy8ICMCxTbi3KcpEZweb59ahodD61+/GGVtlMH3hMu8Z19nss/vP8kZijv5PjY\nmbHqVR+LEA5UE5asnW4EMOpnWh17ZLa0X2fJ7tK+HZtyRdWLZbqLwsioxjhguN9L\nHD4cMqsxzK8oC+ibQlC7wKoDQ+lyBQOQsW2l4dTLO87+n68D4gg4PlSy8gq0cGmG\n/V7m/TcHf15bcda19QftA7+AtY76w4NcNHV4PzfQv/lg586E8nI5BvmJzGPASdjZ\nW9G8o42k4xNczVvLWXLoIgPMyw3aqEUeVpF5NMT43JMeumNiU5G1QNfYMu1yKpnx\nnwIDAQAB\n-----END PUBLIC KEY-----\n";
+const verifierPublicKey = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvUjlPzpLDdnqVrdZYnA6\nKdlum7PzCS1ShxYdBtVMSbcIDFyLXpg2bk7juC/7S7Cy2XC0BzUdHMmHAjqldV8S\n+A9T71/pk7fd8ucWEiBlskd3LlbvGisSDQrnYObuzWtvpPTvODLVOqXgIMFvCu6u\n1rgk4ceb4D4VELa9DRrPfZlDWT6j+IbV82rg8j+8fy8GJh0rx8v6hx1gUPHKVODI\nFoeP5+IpdRX0AvjAEPAWdNLLLdVv5ssgV/zI1gGqFcfnNOc5Jx1YnowhPoiECoqr\nLO0cwuXSRQBWC7KpA7QhAHpA6r5a4BO8E2cG8I2C3AEgFUrRhO9cL6O0R0ZO1fml\nWQIDAQAB\n-----END PUBLIC KEY-----\n"
+
+
 
 export class Holder {
     private holderKeyPair: KeyPair;
@@ -82,6 +85,13 @@ export class Holder {
         // Encrypt the form contents using the issuer's public key to send to the issuer
         const encryptedFormContents = encryptUtil(formContents, issuerPublicKey);
         return encryptedFormContents;
+    }
+
+    public encryptVP(vpString: any): VPEncrypted {
+        const { aesKey, iv } = generateSymmetricKeyAndIv();
+        const encryptedVPandIV = encryptDataWithAES(vpString, aesKey, iv);
+        const encryptedSymmetricKey = encryptSymmetricKeyWithRSA(aesKey, verifierPublicKey);
+        return { encryptedVPandIV, encryptedSymmetricKey };
     }
 
     // Decrypt the credential (encrypted by issuer) using the holder's private key

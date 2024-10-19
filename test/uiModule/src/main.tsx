@@ -65,29 +65,35 @@ const VotingApp = () => {
     setMessage('');
   }, [currentSection]);
 
-  const handleVPSubmit = async (e: React.FormEvent) => {
+  // Holder sending the vp to verifier
+  const handleVpSubmit = async (e: React.FormEvent) => {
 
     e.preventDefault();
 
     try {
       // 0. fetch vp from local storage
-      // 1. encrypt the data
-      // 2. send it to verifier
-      // 3. wait for the response, and if successfully verified, update ui components(setIsVerifying, setIsVoterVerified, setMessage..)
 
       const VP = localStorage.getItem('VP');
-      // make the vc
-      const response = await fetch('/make-vp', {
+
+      // 1. encrypt the data
+      // 2. send it to verifier & wait for response
+
+      const response = await fetch('/submit-vp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ vp: VP }),
       });
 
-      // Check if issuance was successful
+      // 3. if successfully verified, update ui components(setIsVerifying, setIsVoterVerified, setMessage..)
+
       if (response.status === 200) {
         const data = await response.json();
 
         // if true: success / else something wrong with vp or not eligible for votes
+
+        setIsVerifying(false);
+        setIsVoterVerified(true);
+        setMessage('Verification successful. You can now vote.');
 
 
       } else {
@@ -186,7 +192,8 @@ const VotingApp = () => {
     // }, 5000);
   };
 
-  const handleVpSubmit = async (e: React.FormEvent) => {
+  // holder generating vp based on vc
+  const handleVpGeneration = async (e: React.FormEvent) => {
     e.preventDefault();
 
     console.log(vpData) // checkbox values (true or false)
@@ -204,8 +211,6 @@ const VotingApp = () => {
       if (response.status === 200) {
         const data = await response.json();
         const { vp } = data
-
-        console.log("successfully received vp : ", vp)
 
         localStorage.setItem('VP', JSON.stringify(vp));
 
@@ -322,7 +327,7 @@ const VotingApp = () => {
               <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>Verify your right to vote</h2>
 
               {!isVoterVerified && (
-                <form onSubmit={handleVPSubmit} className="mb-4">
+                <form onSubmit={handleVpSubmit} className="mb-4">
                   <button
                     type="button"
                     onClick={handleLocalVpCheck}
@@ -408,7 +413,7 @@ const VotingApp = () => {
               </div>
 
               {hasSdJwt ? (
-                <form onSubmit={handleVpSubmit}>
+                <form onSubmit={handleVpGeneration}>
                   {Object.keys(vpData).map((key) => (
                     <div key={key} className="flex items-center mb-4">
                       <input

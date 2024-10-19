@@ -4,6 +4,7 @@ import path from "path";
 import { Holder } from "./holder";
 import { Issuer } from "./issuer";
 import { VCVerifier } from "./verifier";
+import { VPInfo } from "./myType";
 
 // import { ethers } from 'ethers';
 // import { deployDID } from "./deploy-did";
@@ -141,6 +142,32 @@ app.post('/make-vp', async (req: Request, res: Response) => {
     const vp = await holder.makeVP(sdjwt, selections)
     console.log("the result vp: ", vp);
     res.status(200).json({ vp: vp });
+
+  } catch (error) {
+    console.error('Error while making VP:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// present the vp to the verifier
+app.post('/submit-vp', async (req: Request, res: Response) => {
+  try {
+    // holder submits vp to the issuer (in encrypted form)
+    // issuer verifies the validity & voting eligibility
+
+    // console.log("vp request form", req.body.vp)
+    const encryptedPayload = holder.encryptVP(req.body.vp);
+
+    const vp: VPInfo = vcVerifier.decryptVP(encryptedPayload);
+    // console.log("Decrypted vp on vcVerifier side: ", vp);
+
+    // TODO: vp verification logic
+    // check the signatureVerify(sdjwt, holder's public key) = holder_signature
+    // check if the sdjwt is valid & other things.. 
+    const vpVerificationResult = vcVerifier.verifyVP(vp);
+
+
+    res.status(200).json({ result: "yeyeyeee" });
 
   } catch (error) {
     console.error('Error while making VP:', error);
