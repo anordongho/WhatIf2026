@@ -6,14 +6,6 @@ import { Issuer } from "./issuer";
 import { VCVerifier } from "./verifier";
 import { VPInfo } from "./myType";
 
-// import { ethers } from 'ethers';
-// import { deployDID } from "./deploy-did";
-// import { Jwt } from "./jwt";
-// import { generateSalt, digest } from '@sd-jwt/crypto-nodejs';
-// import { unpack, createHashMapping } from '@sd-jwt/decode';
-// import { SDJwt, listKeys, pack } from './sdjwt';
-// import { publicEncrypt, privateDecrypt, constants, randomBytes } from "crypto";
-// import { VCInfo, parseToVCInfo } from "./myType";
 
 const app = express();
 app.use(express.json());
@@ -89,7 +81,7 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
     return res.status(200).json(vcEncrypted);
 
   } catch (error) {
-    console.error('Error issuing JWT:', error);
+    console.error('Error issuing VC:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -161,13 +153,13 @@ app.post('/submit-vp', async (req: Request, res: Response) => {
     const vp: VPInfo = vcVerifier.decryptVP(encryptedPayload);
     // console.log("Decrypted vp on vcVerifier side: ", vp);
 
-    // TODO: vp verification logic
-    // check the signatureVerify(sdjwt, holder's public key) = holder_signature
-    // check if the sdjwt is valid & other things.. 
-    const vpVerificationResult = vcVerifier.verifyVP(vp);
-
-
-    res.status(200).json({ result: "yeyeyeee" });
+    // vp verification logic
+    const vpVerified = await vcVerifier.verifyVP(vp);
+    if (!vpVerified) {
+      res.status(403).json({ error: 'invalid VP' }); 
+    } else {
+      res.status(200).json({ result: 'VP verified' });
+    }
 
   } catch (error) {
     console.error('Error while making VP:', error);

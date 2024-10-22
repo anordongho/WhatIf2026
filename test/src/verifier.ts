@@ -34,8 +34,7 @@ export class VCVerifier {
     // get holder's public key from vc_registry using vc_registry_address
 
     // Decrypt vp with verifier's private key
-
-    decryptVP(encryptedVP: VPEncrypted): VPInfo {
+    public decryptVP(encryptedVP: VPEncrypted): VPInfo {
 
         const symmetricKey = decryptSymmetricKeyWithRSA(Buffer.from(encryptedVP.encryptedSymmetricKey), this.verifierKeyPair.privateKey);
         const decryptedData = decryptDataWithAES(encryptedVP.encryptedVPandIV.encryptedData, symmetricKey, Buffer.from(encryptedVP.encryptedVPandIV.iv, 'base64'));
@@ -50,25 +49,45 @@ export class VCVerifier {
 
     }
 
-    public verifyVC(encodedVC: string) {
-        return this.vcSignVerifier.verify(encodedVC, requiredClaimKeys);
+    public async verifyVC(encodedVC: string) {
+        return await this.vcSignVerifier.verify(encodedVC, requiredClaimKeys);
     }
 
-    verifyVP(vp: VPInfo) {
-        const sdjwt = vp.sdjwt;
+    public async verifyVP(vp: VPInfo) {
+        const sdjwt = vp.sdjwt;        // encoded SDJwt
         const holderSignature = vp.holder_signature;
 
+        // verify holder's signature
         const verifyResult = verify(null, Buffer.from(sdjwt), holderPublicKey, holderSignature);
         console.log("signature verification result: ", verifyResult)
 
-        // sdjwt 부분에 대한 홀더의 전자서명 검증은 위에서 했고 실제 vp 가 올바른건지 검증하는거 여기서 하면 될듯
-        // 나이랑 시민권 여부도 여기서 검증할 수도 있고 아니면 나눠서 해도 될듯
+        // check required claim keys and signature in sdjwt
+        const { payload, header, kb } = await this.verifyVC(sdjwt);
+        console.log("payload: ", payload);
 
+        const birthDate: Date = payload.birth_date as Date;
+        const citizenship: string = payload.citizenship as string;
+
+        // 유권자 여부 확인
+        if (!birthDate) {
+            console.log("incorrect date of birth:", birthDate);
+        }
+
+        if (!citizenship) {
+            console.log("incorrect citizenship:", citizenship);
+        }
+
+        if (citizenship !== "Republic of Korea") {
+            console.log("not a korean citizen..")
+            return false
+        }
+        
+        if (new Date(birthDate) > new Date("2006.10.23")) {
+            console.log("age under 18..")
+            return false
+        }
+        return true
 
     }
-
-    // Check signature of holder in vp
-
-    // Find issuer's public key and issue history from vc_registry
     
 }

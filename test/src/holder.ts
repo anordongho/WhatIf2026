@@ -63,6 +63,7 @@ export class Holder {
     // make the VP based on selected options
     async makeVP(credential: string, presentationFrame: Record<string, boolean>): Promise<VPInfo> {
 
+        // encoded sdjwt after presentation
         const presentation = await this.sdJwtVcInstance.present(credential, presentationFrame);
 
         console.log("presentation in makevp", presentation);
