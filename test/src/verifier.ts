@@ -4,6 +4,7 @@ import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
 import { generateSalt, digest, ES256 } from '@sd-jwt/crypto-nodejs';
 import { ethers } from 'ethers';
 import { KeyPair, VPEncrypted, VPInfo } from "./myType";
+import { getAttribute } from "./did_documents";
 
 const requiredClaimKeys = ['birth_date'];
 
@@ -32,6 +33,9 @@ export class VCVerifier {
     }
 
     // get holder's public key from vc_registry using vc_registry_address
+    public getHolderPublicKey(vc_registry_address: string) {
+        return getAttribute(vc_registry_address, 'did/pub/Ed25519/veriKey/base64');
+    }
 
     // Decrypt vp with verifier's private key
     public decryptVP(encryptedVP: VPEncrypted): VPInfo {
@@ -44,37 +48,45 @@ export class VCVerifier {
 
     }
 
-    // Check signature of holder in vp
-    public verifyHolderSign(encodedVP: string) {
-
-    }
-
     public async verifyVC(encodedVC: string) {
         return await this.vcSignVerifier.verify(encodedVC, requiredClaimKeys);
     }
 
     public async verifyVP(vp: VPInfo) {
+
+        // testcode for accessing registry
+        // const dummyPublicKey = this.getHolderPublicKey("0x01e708B4e91842a677adDF1Ec5211875f070C5f2");
+        // console.log("dummyPublicKey: ", dummyPublicKey);
+
         const sdjwt = vp.sdjwt;        // encoded SDJwt
         const holderSignature = vp.holder_signature;
-
+        
         // verify holder's signature
         const verifyResult = verify(null, Buffer.from(sdjwt), holderPublicKey, holderSignature);
         console.log("signature verification result: ", verifyResult)
-
+        
         // check required claim keys and signature in sdjwt
         const { payload, header, kb } = await this.verifyVC(sdjwt);
         console.log("payload: ", payload);
-
+        
         const birthDate: Date = payload.birth_date as Date;
         const citizenship: string = payload.citizenship as string;
+        const vcRegistryAddress: string = payload.vc_registry_address as string;
 
         // 유권자 여부 확인
         if (!birthDate) {
             console.log("incorrect date of birth:", birthDate);
+            return false
         }
 
         if (!citizenship) {
             console.log("incorrect citizenship:", citizenship);
+            return false
+        }
+
+        if (!vcRegistryAddress) {
+            console.log("Invalid VC registry address", vcRegistryAddress);
+            return false
         }
 
         if (citizenship !== "Republic of Korea") {
@@ -86,6 +98,9 @@ export class VCVerifier {
             console.log("age under 18..")
             return false
         }
+
+        // TODO: validate VC from VC registry
+        
         return true
 
     }

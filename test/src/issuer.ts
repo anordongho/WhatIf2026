@@ -28,6 +28,8 @@ export class Issuer {
     public async issueVC(encryptedPayload: any) {
         try {
             const payload = decryptUtil(encryptedPayload, this.issuerKeyPair.privateKey);
+
+            // TODO: register the VC to the VC registry and get the address
             const VC_REGISTRY_ADDRESS = "Seoul National University Bldg 301, Rm 314";
 
             const vcInfo: VCInfo = parseToVCInfo(payload, VC_REGISTRY_ADDRESS);

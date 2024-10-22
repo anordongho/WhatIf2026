@@ -262,7 +262,7 @@ export async function deployDID(): Promise<void> {
 }
 
 // getAttribute 함수 추가
-export async function getAttribute(identity: string, attributeName: string): Promise<void> {
+export async function getAttribute(identity: string, attributeName: string) {
   // 환경 변수에서 Infura 프로젝트 ID를 가져옵니다
   const infuraProjectId = "f1db94136c374e1f85a561d4171dcd2a";
 
@@ -290,8 +290,10 @@ export async function getAttribute(identity: string, attributeName: string): Pro
     // bytes 값을 UTF-8 문자열로 변환 (필요한 경우)
     const attributeString = ethers.utils.toUtf8String(attribute);
     console.log('Attribute value (as string):', attributeString);
+	return attributeString;
   } catch (error) {
     console.error('Error getting attribute:', error);
+	return null;
   }
 }
 
