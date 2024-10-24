@@ -1,4 +1,5 @@
 import { generateKeyPairSync, publicEncrypt, privateDecrypt, sign, verify, constants, createCipheriv, randomBytes, createDecipheriv } from 'crypto';
+import { AESEncrypted } from './myType';
 
 // Step 1: Generate RSA Key Pairs for Issuer, Holder, Verifier
 export function generateKeyPairUtil() {
@@ -66,11 +67,24 @@ export function decryptUtil(dataToBeDecrypted: string, privateKey: string) {
     return parsedPayload;
 }
 
+export function encryptUtilAES(data: string, publicKey: string): AESEncrypted {
+    const { aesKey, iv } = generateSymmetricKeyAndIv();
+    const encryptedDataAndIV = encryptDataWithAES(data, aesKey, iv);
+    const encryptedSymmetricKey = encryptSymmetricKeyWithRSA(aesKey, publicKey);
+    return { encryptedDataAndIV, encryptedSymmetricKey };
+}
+
+export function decryptUtilAES(encryptedData: AESEncrypted, privateKey: string): string{
+    const symmetricKey = decryptSymmetricKeyWithRSA(Buffer.from(encryptedData.encryptedSymmetricKey), privateKey);
+    const decryptedData = decryptDataWithAES(encryptedData.encryptedDataAndIV.encryptedData, symmetricKey, Buffer.from(encryptedData.encryptedDataAndIV.iv, 'base64'));
+    return decryptedData;
+}
+
 /**
  * Generate a pair of symmetric key and IV
  * @returns The symmetric key and IV generated.
  */
-export function generateSymmetricKeyAndIv() {
+function generateSymmetricKeyAndIv() {
     const aesKey = randomBytes(32); // AES-256 key size
     const iv = randomBytes(16); // Initialization vector for AES
     return { aesKey, iv };
@@ -83,7 +97,7 @@ export function generateSymmetricKeyAndIv() {
  * @param iv - The initialization vector (16 bytes).
  * @returns The encrypted data and IV used.
  */
-export const encryptDataWithAES = (data: string, symmetricKey: Buffer, iv: Buffer) => {
+const encryptDataWithAES = (data: string, symmetricKey: Buffer, iv: Buffer) => {
     const cipher = createCipheriv('aes-256-cbc', symmetricKey, iv);
     let encrypted = cipher.update(data, 'utf8', 'base64');
     encrypted += cipher.final('base64');
@@ -97,7 +111,7 @@ export const encryptDataWithAES = (data: string, symmetricKey: Buffer, iv: Buffe
  * @param iv - The initialization vector (16 bytes).
  * @returns The decrypted plaintext data.
  */
-export const decryptDataWithAES = (encryptedData: string, key: Buffer, iv: Buffer) => {
+const decryptDataWithAES = (encryptedData: string, key: Buffer, iv: Buffer) => {
     const decipher = createDecipheriv('aes-256-cbc', key, iv);
     let decrypted = decipher.update(encryptedData, 'base64', 'utf8');
     decrypted += decipher.final('utf8');
@@ -110,7 +124,7 @@ export const decryptDataWithAES = (encryptedData: string, key: Buffer, iv: Buffe
  * @param publicKey - The RSA public key for encryption.
  * @returns The encrypted symmetric key.
  */
-export const encryptSymmetricKeyWithRSA = (key: Buffer, publicKey: string) => {
+const encryptSymmetricKeyWithRSA = (key: Buffer, publicKey: string) => {
     return publicEncrypt({
         key: publicKey,
         padding: constants.RSA_PKCS1_OAEP_PADDING,
@@ -124,7 +138,7 @@ export const encryptSymmetricKeyWithRSA = (key: Buffer, publicKey: string) => {
  * @param privateKey - The RSA private key for decryption.
  * @returns The decrypted symmetric key.
  */
-export const decryptSymmetricKeyWithRSA = (encryptedKey: Buffer, privateKey: string) => {
+const decryptSymmetricKeyWithRSA = (encryptedKey: Buffer, privateKey: string) => {
     return privateDecrypt({
         key: privateKey,
         padding: constants.RSA_PKCS1_OAEP_PADDING,

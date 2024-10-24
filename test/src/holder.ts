@@ -4,7 +4,7 @@ import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
 
 import { sign, verify } from 'crypto';
 
-import { decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptDataWithAES, encryptSymmetricKeyWithRSA, encryptUtil, generateSignerVerifierUtil, generateSymmetricKeyAndIv } from './crypto-utils';
+import { decryptUtilAES, encryptUtilAES, generateSignerVerifierUtil } from './crypto-utils';
 import { KeyPair, VCEncrypted, VPEncrypted, VPInfo } from './myType';
 // import {
 //     type PresentationFrame,
@@ -32,11 +32,6 @@ export class Holder {
             hashAlg: 'SHA-256',
             saltGenerator: generateSalt, // Assuming saltGenerator is defined
         });
-    }
-
-    // receive VC from issuer
-    public receiveVC(sdjwt: any) {
-
     }
 
     // Decode the SD-JWT using the provided digest
@@ -84,21 +79,16 @@ export class Holder {
 
     public encryptFormContents(formContents: any) {
         // Encrypt the form contents using the issuer's public key to send to the issuer
-        const encryptedFormContents = encryptUtil(formContents, issuerPublicKey);
+        const encryptedFormContents = encryptUtilAES(JSON.stringify(formContents), issuerPublicKey);
         return encryptedFormContents;
     }
 
     public encryptVP(vpString: any): VPEncrypted {
-        const { aesKey, iv } = generateSymmetricKeyAndIv();
-        const encryptedVPandIV = encryptDataWithAES(vpString, aesKey, iv);
-        const encryptedSymmetricKey = encryptSymmetricKeyWithRSA(aesKey, verifierPublicKey);
-        return { encryptedVPandIV, encryptedSymmetricKey };
+        return encryptUtilAES(vpString, verifierPublicKey);
     }
 
     // Decrypt the credential (encrypted by issuer) using the holder's private key
-    public decryptCredential(encryptedVC: VCEncrypted) {
-        const symmetricKey = decryptSymmetricKeyWithRSA(Buffer.from(encryptedVC.encryptedSymmetricKey), this.holderKeyPair.privateKey);
-        const decryptedData = decryptDataWithAES(encryptedVC.encryptedCredentialandIV.encryptedData, symmetricKey, Buffer.from(encryptedVC.encryptedCredentialandIV.iv, 'base64'));
-        return decryptedData;
+    public decryptVC(encryptedVC: VCEncrypted) {
+        return decryptUtilAES(encryptedVC, this.holderKeyPair.privateKey);
     }
 }

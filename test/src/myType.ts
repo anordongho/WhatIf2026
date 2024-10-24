@@ -3,13 +3,18 @@ export type KeyPair = {
     publicKey: string;
 };
 
-export type VCEncrypted = {
-    encryptedCredentialandIV: {
-        encryptedData: string;
-        iv: string;
-    };
+export type EncryptedDataAndIV = {
+    encryptedData: string;
+    iv: string;
+};
+
+export type AESEncrypted = {
+    encryptedDataAndIV: EncryptedDataAndIV;
     encryptedSymmetricKey: Buffer;
 };
+
+export type VCEncrypted = AESEncrypted;
+export type VPEncrypted = AESEncrypted;
 
 export type VCInfo = {
     name: string;            // Name should be a string
@@ -28,14 +33,6 @@ export type VCInfo = {
 export type VPInfo = {
     sdjwt: string;
     holder_signature: Buffer;
-}
-
-export type VPEncrypted = {
-    encryptedVPandIV: {
-        encryptedData: string;
-        iv: string;
-    };
-    encryptedSymmetricKey: Buffer;
 };
 
 export function parseToVCInfo(userInput: {
@@ -73,4 +70,4 @@ export function parseToVCInfo(userInput: {
         vc_registry_address: vc_registry_address,
         citizenship: userInput.citizenship
     };
-}
+};

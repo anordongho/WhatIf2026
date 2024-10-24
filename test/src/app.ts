@@ -110,9 +110,9 @@ app.post('/decode-sdjwt', async (req: Request, res: Response) => {
 
 app.post('/decrypt-holder-aes', async (req: Request, res: Response) => {
   try {
-    const vcEncrypted = req.body;
+    const encryptedVC = req.body;
 
-    const decryptedData = holder.decryptCredential(vcEncrypted);
+    const decryptedData = holder.decryptVC(encryptedVC);
 
     // Respond with the decrypted data and status 200
     res.status(200).json({ sdjwt: decryptedData });

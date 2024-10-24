@@ -1,4 +1,4 @@
-import { generateSignerVerifierUtil, encryptUtil, decryptUtil, generateSymmetricKeyAndIv, encryptDataWithAES, decryptDataWithAES, decryptSymmetricKeyWithRSA, encryptSymmetricKeyWithRSA } from "./crypto-utils";
+import { generateSignerVerifierUtil, decryptUtilAES } from "./crypto-utils";
 import { sign, verify } from 'crypto';
 import { SDJwtVcInstance } from '@sd-jwt/sd-jwt-vc';
 import { generateSalt, digest, ES256 } from '@sd-jwt/crypto-nodejs';
@@ -39,13 +39,10 @@ export class VCVerifier {
 
     // Decrypt vp with verifier's private key
     public decryptVP(encryptedVP: VPEncrypted): VPInfo {
-
-        const symmetricKey = decryptSymmetricKeyWithRSA(Buffer.from(encryptedVP.encryptedSymmetricKey), this.verifierKeyPair.privateKey);
-        const decryptedData = decryptDataWithAES(encryptedVP.encryptedVPandIV.encryptedData, symmetricKey, Buffer.from(encryptedVP.encryptedVPandIV.iv, 'base64'));
+        const decryptedData = decryptUtilAES(encryptedVP, this.verifierKeyPair.privateKey);
         const decryptedVP = JSON.parse(decryptedData);
         decryptedVP.holder_signature = Buffer.from(decryptedVP.holder_signature, 'base64');
         return decryptedVP
-
     }
 
     public async verifyVC(encodedVC: string) {
