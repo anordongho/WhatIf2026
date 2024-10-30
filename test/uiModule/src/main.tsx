@@ -22,9 +22,53 @@ const VotingApp = () => {
     phone_number: '',
 
     gender: '',
-    birth_date: '',
+    birth_date: '1990-01-01',
     citizenship: '',
   });
+
+  //유효성 검사를 위한 상태 
+  const [errors, setErrors] = useState({
+    name: '',
+    id: '',
+    unique_id: '',
+    email: '',
+    address: '',
+    phone_number: '',
+    gender: '',
+    birth_date: '',
+    citizenship: ''
+  });
+  const getPlaceholder = (key: string) => {
+    switch(key) {
+      case 'unique_id':
+        return '000000-0000000';
+      case 'email':
+        return 'example@email.com';
+      case 'phone_number':
+        return '010-0000-0000';
+      default:
+        return '';
+    }
+  };
+
+  //VC issue를 위한 데이터의 유효성 검사 함수
+  const validateFields = () => {
+    const newErrors = {
+      name: vcData.name.trim() === '' ? 'Name is required' : '',
+      id: vcData.id.trim() === '' ? 'ID is required' : '',
+      unique_id: !/^\d{6}-\d{7}$/.test(vcData.unique_id) ? 'Invalid format (000000-0000000)' : '',
+      email: !vcData.email.includes('@') ? 'Invalid email format' : '',
+      address: vcData.address.trim() === '' ? 'Address is required' : '',
+      phone_number: !/^010-\d{3,4}-\d{4}$/.test(vcData.phone_number) ? 'Invalid format (010-0000-0000)' : '',
+      gender: vcData.gender === '' ? 'Please select gender' : '',
+      birth_date: '',  // 드롭다운이라 검증 불필요
+      citizenship: vcData.citizenship === '' ? 'Please select citizenship' : ''
+    };
+  setErrors(newErrors);
+  return !Object.values(newErrors).some(error => error !== '');
+  };
+
+
   const [vpData, setVpData] = useState({
     name: false,
     id: false,
@@ -115,6 +159,10 @@ const VotingApp = () => {
 
   const handleVcSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateFields()) {
+      setMessage('Please correct the errors before submitting');
+      return;
+    }
     setIsIssuingVC(true);
 
     // Log form data
@@ -301,6 +349,54 @@ const VotingApp = () => {
     </div>
   );
 
+  const DateDropdown = () => {
+    const [year, month, day] = vcData.birth_date.split('-');
+    
+    const daysInMonth = new Date(
+      parseInt(year || '1990'),
+      parseInt(month || '1'),
+      0
+    ).getDate();
+  
+    return (
+      <div className="mb-4">
+        <label className="block text-[#ffa600] mb-2 text-lg">Birth Date</label>
+        <div className="flex gap-4">
+          <select
+            value={year}
+            onChange={(e) => setVcData({ ...vcData, birth_date: `${e.target.value}-${month}-${day}` })}
+            className="bg-white text-black p-3 rounded-md font-sans text-lg flex-1"
+          >
+            {Array.from({ length: 101 }, (_, i) => (1920 + i).toString()).map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+          <select
+            value={month}
+            onChange={(e) => setVcData({ ...vcData, birth_date: `${year}-${e.target.value}-${day}` })}
+            className="bg-white text-black p-3 rounded-md font-sans text-lg flex-1"
+          >
+            {Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0')).map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+          <select
+            value={day}
+            onChange={(e) => setVcData({ ...vcData, birth_date: `${year}-${month}-${e.target.value}` })}
+            className="bg-white text-black p-3 rounded-md font-sans text-lg flex-1"
+          >
+            {Array.from(
+              { length: daysInMonth },
+              (_, i) => (i + 1).toString().padStart(2, '0')
+            ).map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-black text-white min-h-screen flex flex-col" style={{ fontFamily: '"DM Serif Display", serif' }}>
       <nav className="p-4 absolute top-0 left-0">
@@ -366,18 +462,66 @@ const VotingApp = () => {
             <>
               <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>VC Issuer</h2>
               <form onSubmit={handleVcSubmit}>
-                {Object.keys(vcData).map((key) => (
-                  <input
-                    key={key}
-                    type="text"
-                    value={vcData[key as keyof typeof vcData]}
-                    onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
-                    placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
-                    className="bg-white text-black p-3 w-full mb-4 rounded-md font-sans text-lg"
-                  />
-                ))}
+                {Object.keys(vcData).map((key) => {
+                  const typedKey = key as keyof typeof vcData;  // 타입 안전성을 위해 추가
+
+                  if (key === 'gender') {
+                    return (
+                      <div key={key} className="mb-4">
+                        <label className="block text-[#ffa600] mb-2 text-lg">Gender</label>
+                        <select
+                          value={vcData[typedKey]}
+                          onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
+                          className="bg-white text-black p-3 w-full rounded-md font-sans text-lg"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    );
+                  }
+                  
+                  if (key === 'citizenship') {
+                    return (
+                      <div key={key} className="mb-4">
+                        <label className="block text-[#ffa600] mb-2 text-lg">Citizenship</label>
+                        <select
+                          value={vcData[typedKey]}
+                          onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
+                          className="bg-white text-black p-3 w-full rounded-md font-sans text-lg"
+                        >
+                          <option value="">Select Citizenship</option>
+                          <option value="Republic of Korea">Republic of Korea</option>
+                          <option value="United States">United States</option>
+                        </select>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={key} className="mb-4">
+                      <label className="block text-[#ffa600] mb-2 text-lg">
+                        {key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')}
+                      </label>
+                      <input
+                        type="text"
+                        value={vcData[typedKey]}
+                        onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
+                        placeholder={getPlaceholder(key)}
+                        className={`bg-white text-black p-3 w-full rounded-md font-sans text-lg
+                          ${errors[typedKey] ? 'border-2 border-red-500' : ''}`}
+                      />
+                      {errors[typedKey] && (
+                        <p className="text-red-500 text-sm mt-1">{errors[typedKey]}</p>
+                      )}
+                    </div>
+                  );
+                })}
                 <SubmitButton label="ISSUE VC" />
               </form>
+
               {message && (
                 <div className="mt-4 text-[#ffa600]">{message}</div>
               )}
