@@ -81,6 +81,28 @@ const VotingApp = () => {
     birth_date: false,
     citizenship: false,
   });
+  //VP list를 위한 상태 관리
+  const [myVPs, setMyVPs] = useState<Array<{
+    id: string;           // VP 식별자
+    createdAt: string;    // 생성 날짜
+    selectedFields: string[]; // 선택된 정보 필드들
+    vp: string;          // 실제 VP 데이터
+  }>>([]);
+  const handleUseVP = (vp: string) => {
+    localStorage.setItem('VP', vp);
+    setCurrentSection('vote');
+  };
+  
+  const handleDeleteVP = (id: string) => {
+    const updatedVPs = myVPs.filter(vp => vp.id !== id);
+    setMyVPs(updatedVPs);
+    localStorage.setItem('VPList', JSON.stringify(updatedVPs));
+  };
+  //VP data load
+  useEffect(() => {
+    const vpList = localStorage.getItem('VPList');
+    if (vpList) setMyVPs(JSON.parse(vpList));
+  }, []);
   const [vote, setVote] = useState('');
   const [message, setMessage] = useState('');
   const [vcCode, setVcCode] = useState('');
@@ -243,7 +265,7 @@ const VotingApp = () => {
   // holder generating vp based on vc
   const handleVpGeneration = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     console.log(vpData) // checkbox values (true or false)
     setIsPresentingVP(true);
 
@@ -261,6 +283,22 @@ const VotingApp = () => {
         const { vp } = data
 
         localStorage.setItem('VP', JSON.stringify(vp));
+
+        // 생성된 VP를 목록에 추가
+        const newVP = {
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString(),
+          selectedFields: Object.entries(vpData)
+            .filter(([_, selected]) => selected)
+            .map(([field]) => field),
+          vp: vp
+        };
+        
+        // localStorage와 상태 모두 업데이트
+        const existingVPs = JSON.parse(localStorage.getItem('VPList') || '[]');
+        const updatedVPs = [...existingVPs, newVP];
+        localStorage.setItem('VPList', JSON.stringify(updatedVPs));
+        setMyVPs(updatedVPs);
 
         setIsPresentingVP(false);
         setIsVPGenerated(true);
@@ -400,9 +438,10 @@ const VotingApp = () => {
   return (
     <div className="bg-black text-white min-h-screen flex flex-col" style={{ fontFamily: '"DM Serif Display", serif' }}>
       <nav className="p-4 absolute top-0 left-0">
-        <NavButton section="vote" label="Verify & Vote" />
-        <NavButton section="vc" label="VC Issue" />
-        <NavButton section="vp" label="VP Generate" />
+        <NavButton section="vote" label="투표하기(Verify & Vote)" />
+        <NavButton section="vc" label="신분 등록(VC Issue)" />
+        <NavButton section="vp" label="인증 정보 선택(VP Generate)" />
+        <NavButton section="vplist" label="내 VP 관리(My VPs)" />
       </nav>
 
       <div className="flex-grow flex items-center justify-center">
@@ -544,7 +583,7 @@ const VotingApp = () => {
                 </div>
               )}
             </>
-          ) : (
+          ) : currentSection === 'vp' ? (
             <>
               <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>VP Generator</h2>
 
@@ -597,7 +636,52 @@ const VotingApp = () => {
             </>
 
 
-          )}
+          ) : (
+ <>
+   <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>내 VP 목록</h2>
+   <div className="grid grid-cols-1 gap-4">
+  {myVPs.map((vp) => (
+    <div key={vp.id} className="bg-[#1f2937] rounded-xl p-6" style={{ fontFamily: '"DM Serif Display", serif' }}>
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <p className="text-gray-400 text-sm mb-4">
+            생성일: {new Date(vp.createdAt).toLocaleDateString()}
+          </p>
+          <p className="text-[#ffa600] mb-3">포함된 정보:</p>
+          <div className="flex flex-wrap gap-2">
+            {vp.selectedFields.map((field) => (
+              <span key={field} 
+                className="bg-[#ffa600] text-black px-4 py-1 rounded-full text-sm font-sans"
+                style={{ minWidth: '80px', textAlign: 'center' }}
+              >
+                {field}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-3 ml-4">
+          <button
+            onClick={() => handleUseVP(vp.vp)}
+            className="bg-[#ffa600] text-white px-6 py-2 rounded-lg hover:bg-[#ff8800] transition-colors duration-300 font-sans"
+            style={{ width: '100px', height: '40px' }}
+          >
+            USE
+          </button>
+          <button
+            onClick={() => handleDeleteVP(vp.id)}
+            className="bg-[#dc2626] text-white px-6 py-2 rounded-lg hover:bg-[#b91c1c] transition-colors duration-300 font-sans"
+            style={{ width: '100px', height: '40px' }}
+          >
+            DELETE
+          </button>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+ </>
+)
+        }
         </div>
       </div>
     </div>
