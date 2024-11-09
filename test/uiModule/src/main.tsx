@@ -39,7 +39,7 @@ const VotingApp = () => {
     citizenship: ''
   });
   const getPlaceholder = (key: string) => {
-    switch(key) {
+    switch (key) {
       case 'unique_id':
         return '000000-0000000';
       case 'email':
@@ -64,8 +64,8 @@ const VotingApp = () => {
       birth_date: '',  // 드롭다운이라 검증 불필요
       citizenship: vcData.citizenship === '' ? 'Please select citizenship' : ''
     };
-  setErrors(newErrors);
-  return !Object.values(newErrors).some(error => error !== '');
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error !== '');
   };
 
 
@@ -86,13 +86,13 @@ const VotingApp = () => {
     id: string;           // VP 식별자
     createdAt: string;    // 생성 날짜
     selectedFields: string[]; // 선택된 정보 필드들
-    vp: string;          // 실제 VP 데이터
+    vp: { sdjwt: string; holder_signature: string };          // 실제 VP 데이터
   }>>([]);
-  const handleUseVP = (vp: string) => {
-    localStorage.setItem('VP', vp);
+  const handleUseVP = (vp: object) => {
+    localStorage.setItem('VP', JSON.stringify(vp));
     setCurrentSection('vote');
   };
-  
+
   const handleDeleteVP = (id: string) => {
     const updatedVPs = myVPs.filter(vp => vp.id !== id);
     setMyVPs(updatedVPs);
@@ -265,7 +265,7 @@ const VotingApp = () => {
   // holder generating vp based on vc
   const handleVpGeneration = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     console.log(vpData) // checkbox values (true or false)
     setIsPresentingVP(true);
 
@@ -293,7 +293,7 @@ const VotingApp = () => {
             .map(([field]) => field),
           vp: vp
         };
-        
+
         // localStorage와 상태 모두 업데이트
         const existingVPs = JSON.parse(localStorage.getItem('VPList') || '[]');
         const updatedVPs = [...existingVPs, newVP];
@@ -389,13 +389,13 @@ const VotingApp = () => {
 
   const DateDropdown = () => {
     const [year, month, day] = vcData.birth_date.split('-');
-    
+
     const daysInMonth = new Date(
       parseInt(year || '1990'),
       parseInt(month || '1'),
       0
     ).getDate();
-  
+
     return (
       <div className="mb-4">
         <label className="block text-[#ffa600] mb-2 text-lg">Birth Date</label>
@@ -501,67 +501,67 @@ const VotingApp = () => {
             <>
               <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>VC Issuer</h2>
               <form onSubmit={handleVcSubmit}>
-              {Object.keys(vcData).map((key) => {
-                const typedKey = key as keyof typeof vcData;
+                {Object.keys(vcData).map((key) => {
+                  const typedKey = key as keyof typeof vcData;
 
-                if (key === 'birth_date') {
-                  return <DateDropdown key={key} />;
-                }
+                  if (key === 'birth_date') {
+                    return <DateDropdown key={key} />;
+                  }
 
-                if (key === 'gender') {
+                  if (key === 'gender') {
+                    return (
+                      <div key={key} className="mb-4">
+                        <label className="block text-[#ffa600] mb-2 text-lg">Gender</label>
+                        <select
+                          value={vcData[typedKey]}
+                          onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
+                          className="bg-white text-black p-3 w-full rounded-md font-sans text-lg"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    );
+                  }
+
+                  if (key === 'citizenship') {
+                    return (
+                      <div key={key} className="mb-4">
+                        <label className="block text-[#ffa600] mb-2 text-lg">Citizenship</label>
+                        <select
+                          value={vcData[typedKey]}
+                          onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
+                          className="bg-white text-black p-3 w-full rounded-md font-sans text-lg"
+                        >
+                          <option value="">Select Citizenship</option>
+                          <option value="Republic of Korea">Republic of Korea</option>
+                          <option value="United States">United States</option>
+                        </select>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={key} className="mb-4">
-                      <label className="block text-[#ffa600] mb-2 text-lg">Gender</label>
-                      <select
+                      <label className="block text-[#ffa600] mb-2 text-lg">
+                        {key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')}
+                      </label>
+                      <input
+                        type="text"
                         value={vcData[typedKey]}
                         onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
-                        className="bg-white text-black p-3 w-full rounded-md font-sans text-lg"
-                      >
-                        <option value="">Select Gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-                  );
-                }
-                
-                if (key === 'citizenship') {
-                  return (
-                    <div key={key} className="mb-4">
-                      <label className="block text-[#ffa600] mb-2 text-lg">Citizenship</label>
-                      <select
-                        value={vcData[typedKey]}
-                        onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
-                        className="bg-white text-black p-3 w-full rounded-md font-sans text-lg"
-                      >
-                        <option value="">Select Citizenship</option>
-                        <option value="Republic of Korea">Republic of Korea</option>
-                        <option value="United States">United States</option>
-                      </select>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={key} className="mb-4">
-                    <label className="block text-[#ffa600] mb-2 text-lg">
-                      {key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ')}
-                    </label>
-                    <input
-                      type="text"
-                      value={vcData[typedKey]}
-                      onChange={(e) => setVcData({ ...vcData, [key]: e.target.value })}
-                      placeholder={getPlaceholder(key)}
-                      className={`bg-white text-black p-3 w-full rounded-md font-sans text-lg
+                        placeholder={getPlaceholder(key)}
+                        className={`bg-white text-black p-3 w-full rounded-md font-sans text-lg
                         ${errors[typedKey] ? 'border-2 border-red-500' : ''}`}
-                    />
-                    {errors[typedKey] && (
-                      <p className="text-red-500 text-sm mt-1">{errors[typedKey]}</p>
-                    )}
-                  </div>
-                );
-              })}
+                      />
+                      {errors[typedKey] && (
+                        <p className="text-red-500 text-sm mt-1">{errors[typedKey]}</p>
+                      )}
+                    </div>
+                  );
+                })}
                 <SubmitButton label="ISSUE VC" />
               </form>
 
@@ -637,51 +637,51 @@ const VotingApp = () => {
 
 
           ) : (
- <>
-   <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>내 VP 목록</h2>
-   <div className="grid grid-cols-1 gap-4">
-  {myVPs.map((vp) => (
-    <div key={vp.id} className="bg-[#1f2937] rounded-xl p-6" style={{ fontFamily: '"DM Serif Display", serif' }}>
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <p className="text-gray-400 text-sm mb-4">
-            생성일: {new Date(vp.createdAt).toLocaleDateString()}
-          </p>
-          <p className="text-[#ffa600] mb-3">포함된 정보:</p>
-          <div className="flex flex-wrap gap-2">
-            {vp.selectedFields.map((field) => (
-              <span key={field} 
-                className="bg-[#ffa600] text-black px-4 py-1 rounded-full text-sm font-sans"
-                style={{ minWidth: '80px', textAlign: 'center' }}
-              >
-                {field}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="flex gap-3 ml-4">
-          <button
-            onClick={() => handleUseVP(vp.vp)}
-            className="bg-[#ffa600] text-white px-6 py-2 rounded-lg hover:bg-[#ff8800] transition-colors duration-300 font-sans"
-            style={{ width: '100px', height: '40px' }}
-          >
-            USE
-          </button>
-          <button
-            onClick={() => handleDeleteVP(vp.id)}
-            className="bg-[#dc2626] text-white px-6 py-2 rounded-lg hover:bg-[#b91c1c] transition-colors duration-300 font-sans"
-            style={{ width: '100px', height: '40px' }}
-          >
-            DELETE
-          </button>
-        </div>
-      </div>
-    </div>
-  ))}
-</div>
- </>
-)
-        }
+            <>
+              <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>내 VP 목록</h2>
+              <div className="grid grid-cols-1 gap-4">
+                {myVPs.map((vp) => (
+                  <div key={vp.id} className="bg-[#1f2937] rounded-xl p-6" style={{ fontFamily: '"DM Serif Display", serif' }}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="text-gray-400 text-sm mb-4">
+                          생성일: {new Date(vp.createdAt).toLocaleDateString()}
+                        </p>
+                        <p className="text-[#ffa600] mb-3">포함된 정보:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {vp.selectedFields.map((field) => (
+                            <span key={field}
+                              className="bg-[#ffa600] text-black px-4 py-1 rounded-full text-sm font-sans"
+                              style={{ minWidth: '80px', textAlign: 'center' }}
+                            >
+                              {field}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex gap-3 ml-4">
+                        <button
+                          onClick={() => handleUseVP(vp.vp)}
+                          className="bg-[#ffa600] text-white px-6 py-2 rounded-lg hover:bg-[#ff8800] transition-colors duration-300 font-sans"
+                          style={{ width: '100px', height: '40px' }}
+                        >
+                          USE
+                        </button>
+                        <button
+                          onClick={() => handleDeleteVP(vp.id)}
+                          className="bg-[#dc2626] text-white px-6 py-2 rounded-lg hover:bg-[#b91c1c] transition-colors duration-300 font-sans"
+                          style={{ width: '100px', height: '40px' }}
+                        >
+                          DELETE
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )
+          }
         </div>
       </div>
     </div>
