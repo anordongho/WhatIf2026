@@ -436,7 +436,7 @@ const VotingApp = () => {
   };
 
   return (
-    <div className="bg-black text-white min-h-screen flex flex-col" style={{ fontFamily: '"DM Serif Display", serif' }}>
+    <div className="bg-black text-white min-h-screen flex flex-col" style={{ fontFamily: '"Pretendard", "DM Serif Display", serif' }}>
       <nav className="p-4 absolute top-0 left-0">
         <NavButton section="vote" label="투표하기(Verify & Vote)" />
         <NavButton section="vc" label="신분 등록(VC Issue)" />
@@ -641,7 +641,7 @@ const VotingApp = () => {
               <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>내 VP 목록</h2>
               <div className="grid grid-cols-1 gap-4">
                 {myVPs.map((vp) => (
-                  <div key={vp.id} className="bg-[#1f2937] rounded-xl p-6" style={{ fontFamily: '"DM Serif Display", serif' }}>
+                  <div key={vp.id} className="bg-[#1f2937] rounded-xl p-6" style={{ fontFamily: '"Pretendard", "DM Serif Display", serif' }}>
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <p className="text-gray-400 text-sm mb-4">
