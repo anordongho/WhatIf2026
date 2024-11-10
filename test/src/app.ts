@@ -177,11 +177,25 @@ app.post('/submit-vote', async (req: Request, res: Response) => {
     }
 
     // Encrypt the vote using the homomorphic encryption function in holder.ts
-    const encryptedVote = await holder.encryptVoteHomomorphic(parseInt(vote));
+    const voteEncryptionResult = await holder.encryptVoteHomomorphic(parseInt(vote));
 
-    return res.status(200).json({ encryptedVote });
+    return res.status(200).json({ result: voteEncryptionResult });
   } catch (error) {
     console.error('Error submitting vote:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.post('/final-tally', async (req, res) => {
+  try {
+    const topCandidate = await vcVerifier.tallyVotes(); // Calls tallyVotes to get the winner
+    if (topCandidate === -1) {
+      // No votes to count, return a 400 error with a relevant message
+      return res.status(400).json({ error: 'No votes to count' });
+    }
+    res.json({ topCandidate });
+  } catch (error) {
+    console.error('Error tallying votes:', error);
+    res.status(500).send('Error tallying votes');
   }
 });

@@ -5,6 +5,9 @@ import { generateSalt, digest, ES256 } from '@sd-jwt/crypto-nodejs';
 import { ethers } from 'ethers';
 import { KeyPair, VPEncrypted, VPInfo } from "./myType";
 import { getAttribute } from "./did_documents";
+import fs from 'fs';
+import path from 'path';
+
 
 const requiredClaimKeys = ['birth_date'];
 
@@ -57,15 +60,15 @@ export class VCVerifier {
 
         const sdjwt = vp.sdjwt;        // encoded SDJwt
         const holderSignature = vp.holder_signature;
-        
+
         // verify holder's signature
         const verifyResult = verify(null, Buffer.from(sdjwt), holderPublicKey, holderSignature);
         console.log("signature verification result: ", verifyResult)
-        
+
         // check required claim keys and signature in sdjwt
         const { payload, header, kb } = await this.verifyVC(sdjwt);
         console.log("payload: ", payload);
-        
+
         const birthDate: Date = payload.birth_date as Date;
         const citizenship: string = payload.citizenship as string;
         const vcRegistryAddress: string = payload.vc_registry_address as string;
@@ -90,16 +93,92 @@ export class VCVerifier {
             console.log("not a korean citizen..")
             return false
         }
-        
+
         if (new Date(birthDate) > new Date("2006.10.23")) {
             console.log("age under 18..")
             return false
         }
 
         // TODO: validate VC from VC registry
-        
+
         return true
 
     }
-    
+
+    async tallyVotes(): Promise<number> {
+        const SEAL = require('node-seal');
+        const seal = await SEAL();
+
+        const schemeType = seal.SchemeType.bfv
+        const securityLevel = seal.SecurityLevel.tc128
+        const polyModulusDegree = 4096
+        const bitSizes = [36, 36, 37]
+        const bitSize = 20
+
+        const parms = seal.EncryptionParameters(schemeType)
+
+        parms.setPolyModulusDegree(polyModulusDegree)
+
+        parms.setCoeffModulus(
+            seal.CoeffModulus.Create(polyModulusDegree, Int32Array.from(bitSizes))
+        )
+
+        parms.setPlainModulus(
+            seal.PlainModulus.Batching(polyModulusDegree, bitSize)
+        )
+
+        const context = seal.Context(parms, true, securityLevel);
+        if (!context.parametersSet()) {
+            throw new Error('Encryption parameters are not set properly.');
+        }
+
+        // Load the secret key
+        const secretKeySerialized = fs.readFileSync('secretKey.txt', 'utf8');
+        const secretKey = seal.SecretKey();
+        secretKey.load(context, secretKeySerialized);
+
+        const decryptor = seal.Decryptor(context, secretKey);
+        const encoder = seal.BatchEncoder(context);
+
+        // Read all encrypted votes from the file
+        const votesFilePath = path.join(__dirname, 'encryptedVotes.txt');
+        const fileContent = fs.readFileSync(votesFilePath, 'utf8').trim();
+
+        // Check if there are any votes to count
+        if (!fileContent) {
+            console.log("No votes to count.");
+            return -1;
+        }
+        const encryptedVotes = fileContent.split('\n');  // Split lines into an array of serialized votes
+
+
+        // Tally object to count votes for each candidate
+        const voteCounts: { [key: number]: number } = {};
+
+        encryptedVotes.forEach((serializedVote) => {
+            const encryptedVote = seal.CipherText();
+            encryptedVote.load(context, serializedVote);
+            const decryptedPlainText = decryptor.decrypt(encryptedVote);
+            const decodedVote = encoder.decode(decryptedPlainText);
+
+            const candidate = decodedVote[0];  // Assuming each CipherText has one vote value.
+            voteCounts[candidate] = (voteCounts[candidate] || 0) + 1;
+        });
+
+        // Find the candidate with the highest count
+        let topCandidate = -1;
+        let maxVotes = 0;
+        for (const [candidate, count] of Object.entries(voteCounts)) {
+            if (count > maxVotes) {
+                maxVotes = count;
+                topCandidate = Number(candidate);
+            }
+        }
+
+        console.log("Top candidate: ", topCandidate)
+
+        return topCandidate;
+    }
+
+
 }

@@ -337,13 +337,8 @@ const VotingApp = () => {
       });
 
       if (response.ok) {
-        const { encryptedVote } = await response.json();
-        console.log('Encrypted vote received:', encryptedVote);
-
-        // Retrieve existing votes array from local storage or initialize as empty array
-        const votesArray = JSON.parse(localStorage.getItem('encryptedVotes') || '[]');
-        votesArray.push(encryptedVote);
-        localStorage.setItem('encryptedVotes', JSON.stringify(votesArray));
+        const { result } = await response.json();
+        console.log('Encryption result:', result);
 
         setMessage('Your vote has been submitted successfully!');
       } else {
@@ -383,6 +378,33 @@ const VotingApp = () => {
     if (vp) setHasLocalVP(true);
     else setHasLocalVP(false);
   }
+
+  const handleFinalTally = async () => {
+
+    try {
+      const response = await fetch('/final-tally', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const { topCandidate } = await response.json();
+        console.log('Final Tally:', topCandidate);
+        setMessage(`The final tally is: candidate ${topCandidate}`);
+      } else if (response.status === 400) {
+        // Specific handling for 400 error indicating no votes
+        setMessage('No votes to count.');
+      } else {
+        setMessage('Failed to tally votes. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error during final tally:', error);
+      setMessage('An error occurred while calculating the final tally.');
+    }
+  };
+
 
   const NavButton = ({ section, label }: { section: string; label: string }) => (
     <button
@@ -470,6 +492,7 @@ const VotingApp = () => {
         <NavButton section="vc" label="신분 등록(VC Issue)" />
         <NavButton section="vp" label="인증 정보 선택(VP Generate)" />
         <NavButton section="vplist" label="내 VP 관리(My VPs)" />
+        <NavButton section="tally" label="투표 결과 확인(Check final results)" />
       </nav>
 
       <div className="flex-grow flex items-center justify-center">
@@ -664,7 +687,7 @@ const VotingApp = () => {
             </>
 
 
-          ) : (
+          ) : currentSection === 'vplist' ? (
             <>
               <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>내 VP 목록</h2>
               <div className="grid grid-cols-1 gap-4">
@@ -708,6 +731,16 @@ const VotingApp = () => {
                 ))}
               </div>
             </>
+          ) : (
+            <div className="text-center">
+              <h2 className="text-3xl font-bold" style={{ color: '#ffa600' }}>Calculate Final Tally</h2>
+              <button
+                onClick={handleFinalTally}
+                className="bg-[#ffa600] text-white p-3 w-full mt-4 rounded-md font-sans text-lg"
+              >
+                Finalize Tally
+              </button>
+            </div>
           )
           }
         </div>

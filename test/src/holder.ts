@@ -6,7 +6,9 @@ import { sign, verify } from 'crypto';
 
 import { decryptUtilAES, encryptUtilAES, generateSignerVerifierUtil } from './crypto-utils';
 import { KeyPair, VCEncrypted, VPEncrypted, VPInfo } from './myType';
-import SEAL from 'node-seal'
+import fs from 'fs';
+import path from 'path';
+
 // import {
 //     type PresentationFrame,
 //     type SDJWTCompact,
@@ -119,8 +121,12 @@ export class Holder {
             throw new Error('Encryption parameters are not set properly.');
         }
 
-        const keyGenerator = seal.KeyGenerator(context);
-        const publicKey = keyGenerator.createPublicKey();
+        // Load the public key
+        const publicKeySerialized = fs.readFileSync('publicKey.txt', 'utf8');
+        const publicKey = seal.PublicKey();
+        publicKey.load(context, publicKeySerialized);
+
+
         const encryptor = seal.Encryptor(context, publicKey);
         const encoder = seal.BatchEncoder(context);
 
@@ -131,9 +137,14 @@ export class Holder {
 
         // Serialize the CipherText using the `save()` method
         const serializedCipherText = encryptedVote.save();
-        console.log("The encrypted vote (serialized):", serializedCipherText);
+        // console.log("The encrypted vote (serialized):", serializedCipherText);
 
-        return serializedCipherText
+        // Save the serialized encrypted vote to a file
+        // 이거 test/dist에 파일을 저장하는듯
+        const votesFilePath = path.join(__dirname, 'encryptedVotes.txt');
+        fs.appendFileSync(votesFilePath, serializedCipherText + '\n');
+
+        return "success"
         // return serializedCipherText;  // Returning the serialized ciphertext as a string
     }
 }
