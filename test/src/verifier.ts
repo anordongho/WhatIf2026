@@ -105,7 +105,7 @@ export class VCVerifier {
 
     }
 
-    async tallyVotes(): Promise<number> {
+    async tallyVotes(): Promise<{ [key: number]: number }> {
         const SEAL = require('node-seal');
         const seal = await SEAL();
 
@@ -132,13 +132,19 @@ export class VCVerifier {
             throw new Error('Encryption parameters are not set properly.');
         }
 
+        // Load the public key
+        const publicKeySerialized = fs.readFileSync('publicKey.txt', 'utf8');
+        const publicKey = seal.PublicKey();
+        publicKey.load(context, publicKeySerialized);
         // Load the secret key
         const secretKeySerialized = fs.readFileSync('secretKey.txt', 'utf8');
         const secretKey = seal.SecretKey();
         secretKey.load(context, secretKeySerialized);
 
+        const encryptor = seal.Encryptor(context, publicKey)
         const decryptor = seal.Decryptor(context, secretKey);
         const encoder = seal.BatchEncoder(context);
+        const evaluator = seal.Evaluator(context)
 
         // Read all encrypted votes from the file
         const votesFilePath = path.join(__dirname, 'encryptedVotes.txt');
@@ -147,39 +153,37 @@ export class VCVerifier {
         // Check if there are any votes to count
         if (!fileContent) {
             console.log("No votes to count.");
-            return -1;
+            return { 1: -1, 2: -1, 3: -1 };  // Assuming we always expect three candidates
         }
         const encryptedVotes = fileContent.split('\n');  // Split lines into an array of serialized votes
 
-
-        // Tally object to count votes for each candidate
-        const voteCounts: { [key: number]: number } = {};
+        // Initialize a homomorphic accumulator (starting with zero)
+        let totalEncryptedSum = encryptor.encrypt(encoder.encode(Int32Array.from([0])))
 
         encryptedVotes.forEach((serializedVote) => {
             const encryptedVote = seal.CipherText();
             encryptedVote.load(context, serializedVote);
-            const decryptedPlainText = decryptor.decrypt(encryptedVote);
-            const decodedVote = encoder.decode(decryptedPlainText);
 
-            const candidate = decodedVote[0];  // Assuming each CipherText has one vote value.
-            voteCounts[candidate] = (voteCounts[candidate] || 0) + 1;
+            // Add this vote to the total encrypted sum
+            evaluator.add(totalEncryptedSum, encryptedVote, totalEncryptedSum)
         });
 
-        // Find the candidate with the highest count
-        let topCandidate = -1;
-        let maxVotes = 0;
-        for (const [candidate, count] of Object.entries(voteCounts)) {
-            if (count > maxVotes) {
-                maxVotes = count;
-                topCandidate = Number(candidate);
-            }
-        }
+        // Decrypt the final total sum to determine the vote counts for each candidate
+        const decryptedPlainText = decryptor.decrypt(totalEncryptedSum);
+        const decodedResult = encoder.decode(decryptedPlainText);
+        const finalSum = decodedResult[0];  // Sum as a plain integer
 
-        console.log("Top candidate: ", topCandidate)
+        console.log(`Final decrypted sum: ${finalSum}`);
 
-        // fs.writeFileSync(votesFilePath, ''); // Clears the file after tallying
+        // Determine vote counts based on the decrypted final sum
+        const voteCounts: { [key: number]: number } = {
+            1: finalSum % 100,              // Candidate 1's count (units place)
+            2: Math.floor((finalSum % 10000) / 100), // Candidate 2's count (hundreds place)
+            3: Math.floor(finalSum / 10000)  // Candidate 3's count (ten-thousands place)
+        };
 
-        return topCandidate;
+        console.log("Vote counts:", voteCounts);
+        return voteCounts;
     }
 
     async resetVote(): Promise<void> {

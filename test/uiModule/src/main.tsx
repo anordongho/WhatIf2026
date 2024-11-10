@@ -108,6 +108,7 @@ const VotingApp = () => {
   const [vote, setVote] = useState('');
   const [message, setMessage] = useState('');
   const [vcCode, setVcCode] = useState('');
+  const [detailedResults, setDetailedResults] = useState('');
   // const [vpCode, setVpCode] = useState('');
   const [isVPGenerated, setIsVPGenerated] = useState(false);
   const [isVoteSubmitted, setIsVoteSubmitted] = useState(false);
@@ -390,9 +391,18 @@ const VotingApp = () => {
       });
 
       if (response.ok) {
-        const { topCandidate } = await response.json();
-        console.log('Final Tally:', topCandidate);
-        setMessage(`The final tally is: candidate ${topCandidate}`);
+        const { voteCounts } = await response.json();
+
+        // Determine the winner by finding the candidate with the maximum votes
+        const topCandidate = Object.keys(voteCounts).reduce((a, b) =>
+          voteCounts[a] > voteCounts[b] ? a : b
+        );
+
+        console.log('Final Tally:', voteCounts);
+        setMessage(`The winner is candidate ${topCandidate}`);
+
+        // Set detailed results
+        setDetailedResults(voteCounts); // Assuming you have a state variable for detailed results
       } else if (response.status === 400) {
         // Specific handling for 400 error indicating no votes
         setMessage('No votes to count.');
@@ -560,8 +570,8 @@ const VotingApp = () => {
                     >
                       <option value="">Select Candidate</option>
                       <option value="1">Candidate 1</option>
-                      <option value="2">Candidate 2</option>
-                      <option value="3">Candidate 3</option>
+                      <option value="100">Candidate 2</option>
+                      <option value="10000">Candidate 3</option>
                     </select>
                     <SubmitButton label="SUBMIT VOTE" />
                   </form>
@@ -766,6 +776,17 @@ const VotingApp = () => {
               {message && (
                 <div className="mt-4 text-[#ffa600]">
                   {message} {/* Display message */}
+                </div>
+              )}
+
+              {detailedResults && (
+                <div className="mt-4">
+                  <h3 className="text-xl font-semibold">Detailed Results:</h3>
+                  <ul>
+                    {Object.entries(detailedResults).map(([candidate, count]) => (
+                      <li key={candidate}>Candidate {candidate}: {count} votes</li>
+                    ))}
+                  </ul>
                 </div>
               )}
 

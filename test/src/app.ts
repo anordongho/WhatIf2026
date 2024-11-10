@@ -188,12 +188,12 @@ app.post('/submit-vote', async (req: Request, res: Response) => {
 
 app.post('/final-tally', async (req, res) => {
   try {
-    const topCandidate = await vcVerifier.tallyVotes(); // Calls tallyVotes to get the winner
-    if (topCandidate === -1) {
-      // No votes to count, return a 400 error with a relevant message
+    const voteCounts = await vcVerifier.tallyVotes(); // Calls tallyVotes to get the winner
+    const noVotes = Object.values(voteCounts).every(count => count === -1);
+    if (noVotes) {
       return res.status(400).json({ error: 'No votes to count' });
     }
-    res.json({ topCandidate });
+    res.json({ voteCounts });
   } catch (error) {
     console.error('Error tallying votes:', error);
     res.status(500).send('Error tallying votes');
