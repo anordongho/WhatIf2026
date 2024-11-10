@@ -6,6 +6,7 @@ import { sign, verify } from 'crypto';
 
 import { decryptUtilAES, encryptUtilAES, generateSignerVerifierUtil } from './crypto-utils';
 import { KeyPair, VCEncrypted, VPEncrypted, VPInfo } from './myType';
+import SEAL from 'node-seal'
 // import {
 //     type PresentationFrame,
 //     type SDJWTCompact,
@@ -90,5 +91,49 @@ export class Holder {
     // Decrypt the credential (encrypted by issuer) using the holder's private key
     public decryptVC(encryptedVC: VCEncrypted) {
         return decryptUtilAES(encryptedVC, this.holderKeyPair.privateKey);
+    }
+
+    async encryptVoteHomomorphic(vote: number): Promise<string> {
+        const SEAL = require('node-seal')
+        const seal = await SEAL();
+        const schemeType = seal.SchemeType.bfv
+        const securityLevel = seal.SecurityLevel.tc128
+        const polyModulusDegree = 4096
+        const bitSizes = [36, 36, 37]
+        const bitSize = 20
+
+        const parms = seal.EncryptionParameters(schemeType)
+
+        parms.setPolyModulusDegree(polyModulusDegree)
+
+        parms.setCoeffModulus(
+            seal.CoeffModulus.Create(polyModulusDegree, Int32Array.from(bitSizes))
+        )
+
+        parms.setPlainModulus(
+            seal.PlainModulus.Batching(polyModulusDegree, bitSize)
+        )
+
+        const context = seal.Context(parms, true, securityLevel);
+        if (!context.parametersSet()) {
+            throw new Error('Encryption parameters are not set properly.');
+        }
+
+        const keyGenerator = seal.KeyGenerator(context);
+        const publicKey = keyGenerator.createPublicKey();
+        const encryptor = seal.Encryptor(context, publicKey);
+        const encoder = seal.BatchEncoder(context);
+
+        const voteArray = new Int32Array([vote]);
+        const plainText = encoder.encode(voteArray);
+        const encryptedVote = seal.CipherText();
+        encryptor.encrypt(plainText, encryptedVote);
+
+        // Serialize the CipherText using the `save()` method
+        const serializedCipherText = encryptedVote.save();
+        console.log("The encrypted vote (serialized):", serializedCipherText);
+
+        return serializedCipherText
+        // return serializedCipherText;  // Returning the serialized ciphertext as a string
     }
 }

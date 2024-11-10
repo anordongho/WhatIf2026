@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 
+// local storage items: encryptedVotes (array of encrypted votes), VP (vp), disclosures, sdjwt, VPList
+
 const VotingApp = () => {
   const [currentSection, setCurrentSection] = useState('vote');
   const [voterId, setVoterId] = useState('');
@@ -325,14 +327,40 @@ const VotingApp = () => {
 
   const handleVoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsVoteSubmitted(true);
-    setMessage('Your vote has been submitted successfully!');
-    setTimeout(() => {
-      setIsVoteSubmitted(false);
-      setIsVoterVerified(false);
-      setVote('');
-      setMessage('');
-    }, 5000);
+    try {
+      const response = await fetch('/submit-vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ vote }), // send the vote data
+      });
+
+      if (response.ok) {
+        const { encryptedVote } = await response.json();
+        console.log('Encrypted vote received:', encryptedVote);
+
+        // Retrieve existing votes array from local storage or initialize as empty array
+        const votesArray = JSON.parse(localStorage.getItem('encryptedVotes') || '[]');
+        votesArray.push(encryptedVote);
+        localStorage.setItem('encryptedVotes', JSON.stringify(votesArray));
+
+        setMessage('Your vote has been submitted successfully!');
+      } else {
+        setMessage('Failed to submit your vote. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting vote:', error);
+      setMessage('An error occurred while submitting your vote.');
+    } finally {
+      setIsVoteSubmitted(true);
+      setTimeout(() => {
+        setIsVoteSubmitted(false);
+        setIsVoterVerified(false);
+        setVote('');
+        setMessage('');
+      }, 5000);
+    }
   };
 
   // Reload: Check localStorage for 'sdjwt' and 'disclosures'
@@ -488,9 +516,9 @@ const VotingApp = () => {
                       className="bg-white text-black p-3 w-full mb-4 rounded-md font-sans text-lg"
                     >
                       <option value="">Select Candidate</option>
-                      <option value="candidate1">Candidate 1</option>
-                      <option value="candidate2">Candidate 2</option>
-                      <option value="candidate3">Candidate 3</option>
+                      <option value="1">Candidate 1</option>
+                      <option value="2">Candidate 2</option>
+                      <option value="3">Candidate 3</option>
                     </select>
                     <SubmitButton label="SUBMIT VOTE" />
                   </form>

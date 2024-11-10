@@ -156,13 +156,32 @@ app.post('/submit-vp', async (req: Request, res: Response) => {
     // vp verification logic
     const vpVerified = await vcVerifier.verifyVP(vp);
     if (!vpVerified) {
-      res.status(403).json({ error: 'invalid VP' }); 
+      res.status(403).json({ error: 'invalid VP' });
     } else {
       res.status(200).json({ result: 'VP verified' });
     }
 
   } catch (error) {
     console.error('Error while making VP:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// /submit-vote function
+app.post('/submit-vote', async (req: Request, res: Response) => {
+  try {
+    const { vote } = req.body;
+
+    if (!vote) {
+      return res.status(400).json({ error: 'Vote data is required' });
+    }
+
+    // Encrypt the vote using the homomorphic encryption function in holder.ts
+    const encryptedVote = await holder.encryptVoteHomomorphic(parseInt(vote));
+
+    return res.status(200).json({ encryptedVote });
+  } catch (error) {
+    console.error('Error submitting vote:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
