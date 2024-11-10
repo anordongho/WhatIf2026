@@ -354,7 +354,7 @@ const VotingApp = () => {
         setIsVoterVerified(false);
         setVote('');
         setMessage('');
-      }, 3000);
+      }, 1000);
     }
   };
 
