@@ -177,7 +177,18 @@ export class VCVerifier {
 
         console.log("Top candidate: ", topCandidate)
 
+        // fs.writeFileSync(votesFilePath, ''); // Clears the file after tallying
+
         return topCandidate;
+    }
+
+    async resetVote(): Promise<void> {
+        const filePath = path.join(__dirname, 'encryptedVotes.txt');
+
+        // Write an empty string to the file to reset it
+        fs.writeFileSync(filePath, '', 'utf8');
+
+        console.log('Votes have been reset.');
     }
 
 

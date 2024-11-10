@@ -199,3 +199,13 @@ app.post('/final-tally', async (req, res) => {
     res.status(500).send('Error tallying votes');
   }
 });
+
+app.post('/reset-vote', async (req: Request, res: Response) => {
+  try {
+    await vcVerifier.resetVote(); // Call the function to reset the votes
+    res.status(200).send('Vote has been reset.');
+  } catch (error) {
+    console.error('Error resetting vote:', error);
+    res.status(500).send('Error resetting vote');
+  }
+});

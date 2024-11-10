@@ -354,7 +354,7 @@ const VotingApp = () => {
         setIsVoterVerified(false);
         setVote('');
         setMessage('');
-      }, 5000);
+      }, 3000);
     }
   };
 
@@ -402,6 +402,26 @@ const VotingApp = () => {
     } catch (error) {
       console.error('Error during final tally:', error);
       setMessage('An error occurred while calculating the final tally.');
+    }
+  };
+
+  const handleResetVote = async () => {
+    try {
+      const response = await fetch('/reset-vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setMessage('Vote has been reset.');
+      } else {
+        setMessage('Failed to reset vote. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error during reset vote:', error);
+      setMessage('An error occurred while resetting the vote.');
     }
   };
 
@@ -733,12 +753,28 @@ const VotingApp = () => {
             </>
           ) : (
             <div className="text-center">
-              <h2 className="text-3xl font-bold" style={{ color: '#ffa600' }}>Calculate Final Tally</h2>
+              <h2 className="text-3xl font-bold" style={{ color: '#ffa600' }}>
+                Calculate Final Tally
+              </h2>
               <button
                 onClick={handleFinalTally}
                 className="bg-[#ffa600] text-white p-3 w-full mt-4 rounded-md font-sans text-lg"
               >
                 Finalize Tally
+              </button>
+
+              {message && (
+                <div className="mt-4 text-[#ffa600]">
+                  {message} {/* Display message */}
+                </div>
+              )}
+
+              {/* Reset Vote Button */}
+              <button
+                onClick={handleResetVote}
+                className="bg-red-600 text-white p-3 w-full mt-4 rounded-md font-sans text-lg"
+              >
+                Reset Vote
               </button>
             </div>
           )
