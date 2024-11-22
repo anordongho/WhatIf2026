@@ -5,6 +5,7 @@ import { Holder } from "./holder";
 import { Issuer } from "./issuer";
 import { VCVerifier } from "./verifier";
 import { VPInfo } from "./myType";
+import { DIDRegistryClient, PublicKey} from './didTest';
 
 
 const app = express();
@@ -55,6 +56,22 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
     if (!formContents) {
       return res.status(400).json({ error: 'Form contents are required' });
     }
+    
+    // 홀더의 이더리움 주소로 DID Document 조회
+    const holderEthereumAddress = "0x01e708B4e91842a677adDF1Ec5211875f070C5f2";
+    const holderDID = `did:eth:${holderEthereumAddress.toLowerCase()}`;
+    
+    console.log("Attempting to resolve DID:", holderDID);
+    const didClient = new DIDRegistryClient("https://sepolia.infura.io/v3/f1db94136c374e1f85a561d4171dcd2a", "c505618b9bf373fa6cccf77afb081cc7d8c4eaee1a0f7be02b0bdf4649d6cac3");
+    const didDocument = await didClient.resolveDID(holderDID);
+    
+    // 활성화된 첫 번째 공개키 찾기
+    // const activePublicKey = didDocument.publicKeys.find((key: PublicKey) => key.active);
+    // if (activePublicKey) {
+    //     console.log("Found active public key:", activePublicKey);
+    // } else {
+    //     console.log("No active public key found");
+    // }
 
     const encryptedPayload = holder.encryptFormContents(formContents);
 

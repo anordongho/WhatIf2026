@@ -5,6 +5,7 @@ import { generateSalt, digest, ES256 } from '@sd-jwt/crypto-nodejs';
 import { ethers } from 'ethers';
 import { KeyPair, VPEncrypted, VPInfo } from "./myType";
 import { getAttribute } from "./did_documents";
+import { VCRegistry } from './verifiable_data_registry';
 import fs from 'fs';
 import path from 'path';
 
@@ -69,6 +70,41 @@ export class VCVerifier {
         const { payload, header, kb } = await this.verifyVC(sdjwt);
         console.log("payload: ", payload);
 
+        // VC Registry에서 vcId 검증
+        const vcRegistry = new VCRegistry(
+        "https://sepolia.infura.io/v3/f1db94136c374e1f85a561d4171dcd2a",
+        "c505618b9bf373fa6cccf77afb081cc7d8c4eaee1a0f7be02b0bdf4649d6cac3"
+        );
+
+        // payload 타입 체크 및 vcId 추출
+        if (typeof payload !== 'object' || !payload || !('vc_registry_address' in payload) || typeof payload.vc_registry_address !== 'string') {
+            console.log("Invalid payload structure or missing vc_registry_address");
+            return false;
+        }
+
+        const vcId = payload.vc_registry_address;
+
+        try {
+            // VC Registry에서 VC 속성 조회
+            const vcAttributes = await vcRegistry.getVCAttributes(vcId);
+            if (!vcAttributes) {
+                console.log("VC not found in registry");
+                return false;
+        }
+
+        // VC가 유효한지 확인
+        const isValid = await vcRegistry.isVCValid(vcId);
+        if (!isValid) {
+            console.log("VC is not valid in registry");
+            return false;
+        }
+
+        console.log("VC verified in registry:", vcAttributes);
+        } catch (error) {
+            console.error("Failed to verify VC in registry:", error);
+            return false;
+        }
+
         const birthDate: Date = payload.birth_date as Date;
         const citizenship: string = payload.citizenship as string;
         const vcRegistryAddress: string = payload.vc_registry_address as string;
@@ -99,8 +135,9 @@ export class VCVerifier {
             return false
         }
 
+        
         // TODO: validate VC from VC registry
-
+        
         return true
 
     }
