@@ -21,6 +21,8 @@ const holderPublicKey = "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAO
 
 const { signer, verifier } = generateSignerVerifierUtil(issuerKeyPair.privateKey, issuerKeyPair.publicKey);
 
+const publicKeysFilePath = path.join(__dirname, 'publicKeys.txt');
+
 export class VCVerifier {
     private verifierKeyPair: KeyPair;
     private vcSignVerifier = new SDJwtVcInstance({
@@ -37,7 +39,7 @@ export class VCVerifier {
     }
 
     // get holder's public key from vc_registry using vc_registry_address
-    public getHolderPublicKey(vc_registry_address: string) {
+    public async getHolderPublicKey(vc_registry_address: string) {
         return getAttribute(vc_registry_address, 'did/pub/Ed25519/veriKey/base64');
     }
 
@@ -53,11 +55,23 @@ export class VCVerifier {
         return await this.vcSignVerifier.verify(encodedVC, requiredClaimKeys);
     }
 
-    public async verifyVP(vp: VPInfo) {
+    // failure codes: INVALID_PAYLOAD, INVALID_SIGNATURE, MISSING_VC_REG_ADDR, VC_NOT_FOUND, 
+    // VC_INVALID, VC_NOT_VERIFIABLE, MISSING_FIELDS, INVALID_CITIZENSHIP, UNDERAGE, DUPLICATE_PUBLIC_KEY
+
+    public async verifyVP(vp: VPInfo): Promise<{ status: boolean; code: string; message: string }> {
 
         // testcode for accessing registry
-        // const dummyPublicKey = this.getHolderPublicKey("0x01e708B4e91842a677adDF1Ec5211875f070C5f2");
-        // console.log("dummyPublicKey: ", dummyPublicKey);
+        const dummyPublicKey = await this.getHolderPublicKey("0x01e708B4e91842a677adDF1Ec5211875f070C5f2");
+        if (!dummyPublicKey) {
+            console.error("Public key is null or undefined.");
+        } else {
+            try {
+                const rawPublicKey = Buffer.from(dummyPublicKey, 'base64').toString('utf-8');
+                console.log("Decoded Public Key:", rawPublicKey);
+            } catch (error) {
+                console.error("Error decoding public key:", error);
+            }
+        }
 
         const sdjwt = vp.sdjwt;        // encoded SDJwt
         const holderSignature = vp.holder_signature;
@@ -65,6 +79,10 @@ export class VCVerifier {
         // verify holder's signature
         const verifyResult = verify(null, Buffer.from(sdjwt), holderPublicKey, holderSignature);
         console.log("signature verification result: ", verifyResult)
+        if (!verifyResult) {
+            return { status: false, code: 'INVALID_SIGNATURE', message: "Invalid holder signature." };
+        }
+
 
         // check required claim keys and signature in sdjwt
         const { payload, header, kb } = await this.verifyVC(sdjwt);
@@ -72,14 +90,20 @@ export class VCVerifier {
 
         // VC Registry에서 vcId 검증
         const vcRegistry = new VCRegistry(
-        "https://sepolia.infura.io/v3/f1db94136c374e1f85a561d4171dcd2a",
-        "c505618b9bf373fa6cccf77afb081cc7d8c4eaee1a0f7be02b0bdf4649d6cac3"
+            "https://sepolia.infura.io/v3/f1db94136c374e1f85a561d4171dcd2a",
+            "c505618b9bf373fa6cccf77afb081cc7d8c4eaee1a0f7be02b0bdf4649d6cac3"
         );
 
         // payload 타입 체크 및 vcId 추출
-        if (typeof payload !== 'object' || !payload || !('vc_registry_address' in payload) || typeof payload.vc_registry_address !== 'string') {
-            console.log("Invalid payload structure or missing vc_registry_address");
-            return false;
+        if (!payload || typeof payload !== 'object') {
+            console.log("Invalid payload structur");
+
+            return { status: false, code: 'INVALID_PAYLOAD', message: "Invalid payload structure." };
+        }
+
+        if (!('vc_registry_address' in payload) || typeof payload.vc_registry_address !== 'string') {
+            console.log("Missing vc_registry_address");
+            return { status: false, code: 'MISSING_VC_REG_ADDR', message: "Missing or malformed vc registry address." };
         }
 
         const vcId = payload.vc_registry_address;
@@ -89,20 +113,20 @@ export class VCVerifier {
             const vcAttributes = await vcRegistry.getVCAttributes(vcId);
             if (!vcAttributes) {
                 console.log("VC not found in registry");
-                return false;
-        }
+                return { status: false, code: 'VC_NOT_FOUND', message: "VC not found in the registry." };
+            }
 
-        // VC가 유효한지 확인
-        const isValid = await vcRegistry.isVCValid(vcId);
-        if (!isValid) {
-            console.log("VC is not valid in registry");
-            return false;
-        }
+            // VC가 유효한지 확인
+            const isValid = await vcRegistry.isVCValid(vcId);
+            if (!isValid) {
+                console.log("VC is not valid in registry");
+                return { status: false, code: 'VC_INVALID', message: "VC is not valid in the registry." };
+            }
 
-        console.log("VC verified in registry:", vcAttributes);
+            console.log("VC verified in registry:", vcAttributes);
         } catch (error) {
             console.error("Failed to verify VC in registry:", error);
-            return false;
+            return { status: false, code: 'VC_NOT_VERIFIABLE', message: "VC is unverifiable." };
         }
 
         const birthDate: Date = payload.birth_date as Date;
@@ -110,36 +134,79 @@ export class VCVerifier {
         const vcRegistryAddress: string = payload.vc_registry_address as string;
 
         // 유권자 여부 확인
-        if (!birthDate) {
-            console.log("incorrect date of birth:", birthDate);
-            return false
-        }
-
-        if (!citizenship) {
-            console.log("incorrect citizenship:", citizenship);
-            return false
-        }
-
-        if (!vcRegistryAddress) {
-            console.log("Invalid VC registry address", vcRegistryAddress);
-            return false
+        if (!birthDate || !citizenship || !vcRegistryAddress) {
+            return { status: false, code: 'MISSING_FIELDS', message: "Missing required fields in the payload." };
         }
 
         if (citizenship !== "Republic of Korea") {
             console.log("not a korean citizen..")
-            return false
+            return { status: false, code: 'INVALID_CITIZENSHIP', message: "Not a Korean citizen." };
         }
 
         if (new Date(birthDate) > new Date("2006.10.23")) {
             console.log("age under 18..")
-            return false
+            return { status: false, code: 'UNDERAGE', message: "Age under 18." };
         }
 
-        
-        // TODO: validate VC from VC registry
-        
-        return true
 
+        // TODO: validate VC from VC registry
+
+        // save the public key of the user attempting to vote (no going back)
+
+        const normalizedHolderPublicKey = this.normalizePublicKey(holderPublicKey);
+
+        const result = await this.validateAndSavePublicKey(normalizedHolderPublicKey);
+
+        if (!result) {
+            console.log("Duplicate public key detected..");
+            return { status: false, code: 'DUPLICATE_PUBLIC_KEY', message: "Duplicate public key detected." };
+        }
+
+        return { status: true, code: 'VERIFIED', message: "VP verified successfully." };
+
+    }
+
+    private async validateAndSavePublicKey(publicKey: string): Promise<Boolean> {
+        // Read existing keys
+        const existingKeys = await this.getExistingPublicKeys();
+
+        // Check for duplicates
+        if (existingKeys.includes(publicKey.trim())) {
+            console.log("Duplicate public key detected.");
+            return false;
+        }
+
+        // Save the unique public key
+        fs.appendFileSync(publicKeysFilePath, publicKey.trim() + '\n');
+        console.log("Public key saved.");
+        return true;
+    }
+
+    private normalizePublicKey(publicKey: string): string {
+        // Remove the '-----BEGIN PUBLIC KEY-----' and '-----END PUBLIC KEY-----' lines
+        const keyWithoutHeaderFooter = publicKey
+            .replace('-----BEGIN PUBLIC KEY-----', '')
+            .replace('-----END PUBLIC KEY-----', '')
+            .trim();
+
+        // Remove line breaks and excess whitespace to form a single line key
+        return keyWithoutHeaderFooter.replace(/\s+/g, '');
+    }
+
+    private async getExistingPublicKeys(): Promise<string[]> {
+        if (!fs.existsSync(publicKeysFilePath)) {
+            return [];
+        }
+        const fileContent = fs.readFileSync(publicKeysFilePath, 'utf-8');
+
+        // Normalize all existing keys in the file
+        return fileContent.split('\n')
+            .filter(key => key.trim() !== '') // Filter out any empty lines
+            .map(key => this.normalizePublicKey(key)); // Normalize each key
+    }
+
+    private savePublicKey(publicKey: string): void {
+        fs.appendFileSync(publicKeysFilePath, publicKey + '\n');
     }
 
     async tallyVotes(): Promise<{ [key: number]: number }> {
@@ -225,9 +292,11 @@ export class VCVerifier {
 
     async resetVote(): Promise<void> {
         const filePath = path.join(__dirname, 'encryptedVotes.txt');
+        const keysFilePath = path.join(__dirname, 'publicKeys.txt');
 
         // Write an empty string to the file to reset it
         fs.writeFileSync(filePath, '', 'utf8');
+        fs.writeFileSync(keysFilePath, '', 'utf8');
 
         console.log('Votes have been reset.');
     }
