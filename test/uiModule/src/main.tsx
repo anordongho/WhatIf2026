@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import Navbar from './components/Navbar';
+import SubmitButton from './components/common/SubmitButton';
 
 // local storage items: encryptedVotes (array of encrypted votes), VP (vp), disclosures, sdjwt, VPList
 
@@ -440,17 +441,6 @@ const VotingApp = () => {
 		setCurrentSection(section);
 		setMessage('');
 	}
-
-  const SubmitButton = ({ label, disabled = false }: { label: string; disabled?: boolean }) => (
-    <button
-      type="submit"
-      disabled={disabled}
-      className={`bg-[#f78400] text-white p-3 rounded-md w-full text-lg font-sans font-bold 
-        ${disabled ? 'bg-gray-400 cursor-not-allowed' : 'hover:bg-[#cd812a] transition-colors duration-300'}`}
-    >
-      {label}
-    </button>
-  );
 
   const LoadingScreen = ({ message }: { message: string }) => (
     <div className="text-center">
