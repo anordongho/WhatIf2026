@@ -1,19 +1,12 @@
-import React from "react";
+import { useDispatch } from 'react-redux';
+import { Section, setSection } from "../redux/slice/section";
 
-export default function Navbar(
-	props: {
-		onSectionClick: (section: string) => void,
-		// setCurrentSection: (section: string) => void,
-		// setMessage: (message: string) => void
-	}
-) {
-	const { onSectionClick } = props;
+export default function Navbar() {
+	const dispatch = useDispatch();
 
-	const NavButton = ({ section, label }: { section: string; label: string }) => (
+	const NavButton = ({ section, label }: { section: Section; label: string }) => (
 		<button
-			onClick={() => {
-				onSectionClick(section);
-			}}
+			onClick={() => {dispatch(setSection(section))}}
 			className="text-[#ffa600] hover:text-white transition-colors duration-300 text-sm mr-4 py-2"
 		>
 			{label}
@@ -22,30 +15,11 @@ export default function Navbar(
 	
 	return (
 		<nav className="p-4">
-			<NavButton section="vote" label="투표하기(Verify & Vote)" />
-			<NavButton section="vc" label="신분 등록(VC Issue)" />
-			<NavButton section="vp" label="인증 정보 선택(VP Generate)" />
-			<NavButton section="vplist" label="내 VP 관리(My VPs)" />
-			<NavButton section="tally" label="투표 결과 확인(Check final results)" />
-			{/* <button onClick={() => setCurrentSection("vote")}>투표하기(Verify & Vote)</button>
-			<button onClick={() => setCurrentSection("vc")}>신분 등록(VC Issue)</button>
-			<button onClick={() => setCurrentSection("vp")}>인증 정보 선택(VP Generate)</button>
-			<button onClick={() => setCurrentSection("vplist")}>내 VP 관리(My VPs)</button>
-			<button onClick={() => setCurrentSection("tally")}>투표 결과 확인(Check final results)</button> */}
+			<NavButton section={Section.VOTE} label="투표하기(Verify & Vote)" />
+			<NavButton section={Section.VC} label="신분 등록(VC Issue)" />
+			<NavButton section={Section.VP} label="인증 정보 선택(VP Generate)" />
+			<NavButton section={Section.VP_LIST} label="내 VP 관리(My VPs)" />
+			<NavButton section={Section.TALLY} label="투표 결과 확인(Check final results)" />
 		</nav>
 	)
 }
-
-// const NavButton = ({ section, label }: { section: string; label: string }) => (
-// 	<button
-// 		onClick={() => {
-// 			// setCurrentSection(section);
-// 			// setMessage('');
-// 		}}
-// 		className="text-[#ffa600] hover:text-white transition-colors duration-300 text-sm mr-4 py-2"
-// 	>
-// 		{label}
-// 	</button>
-// );
-
-// export default Navbar;
