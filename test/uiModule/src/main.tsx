@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import Navbar from './components/Navbar';
 
 // local storage items: encryptedVotes (array of encrypted votes), VP (vp), disclosures, sdjwt, VPList
 
@@ -435,18 +436,10 @@ const VotingApp = () => {
     }
   };
 
-
-  const NavButton = ({ section, label }: { section: string; label: string }) => (
-    <button
-      onClick={() => {
-        setCurrentSection(section);
-        setMessage(''); // 네비게이션 시 메시지 초기화
-      }}
-      className="text-[#ffa600] hover:text-white transition-colors duration-300 text-sm mr-4 py-2"
-    >
-      {label}
-    </button>
-  );
+  const handleSectionClick = (section: string) => {
+		setCurrentSection(section);
+		setMessage('');
+	}
 
   const SubmitButton = ({ label, disabled = false }: { label: string; disabled?: boolean }) => (
     <button
@@ -517,14 +510,7 @@ const VotingApp = () => {
 
   return (
     <div className="bg-black text-white min-h-screen flex flex-col" style={{ fontFamily: '"Pretendard", "DM Serif Display", serif' }}>
-      <nav className="p-4 absolute top-0 left-0">
-        <NavButton section="vote" label="투표하기(Verify & Vote)" />
-        <NavButton section="vc" label="신분 등록(VC Issue)" />
-        <NavButton section="vp" label="인증 정보 선택(VP Generate)" />
-        <NavButton section="vplist" label="내 VP 관리(My VPs)" />
-        <NavButton section="tally" label="투표 결과 확인(Check final results)" />
-      </nav>
-
+      <Navbar onSectionClick={handleSectionClick} />
       <div className="flex-grow flex items-center justify-center">
         <div className="max-w-md w-full px-6 py-8">
           {isVerifying ? (
