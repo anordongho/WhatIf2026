@@ -3,6 +3,7 @@ import sectionSlice from "../slice/section";
 import { vcDataSlice, vcDataErrorSlice } from "../slice/vcData";
 import messageSlice from "../slice/message";
 import errorMessageSlice from "../slice/errorMessage";
+import vpListSlice from "../slice/vpList";
 
 const store = configureStore({
     reducer: {
@@ -10,7 +11,8 @@ const store = configureStore({
         vcDataReducer: vcDataSlice.reducer,
         vcDataErrorReducer: vcDataErrorSlice.reducer,
         messageReducer: messageSlice.reducer,
-        errorMessageReducer: errorMessageSlice.reducer
+        errorMessageReducer: errorMessageSlice.reducer,
+        vpListReducer: vpListSlice.reducer
     }
 });
 

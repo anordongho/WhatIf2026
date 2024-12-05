@@ -17,25 +17,6 @@ const getPlaceholder = (key: string) => {
 	}
 };
 
-//VC issue를 위한 데이터의 유효성 검사 함수
-function validateFields(vcData: VcData) {
-	const dispatch = useDispatch();
-	// const errors = useSelector((state: RootState) => state.vcDataErrorReducer.vcDataError);
-	const newErrors = {
-		name: vcData.name.trim() === '' ? 'Name is required' : '',
-		id: vcData.id.trim() === '' ? 'ID is required' : '',
-		unique_id: !/^\d{6}-\d{7}$/.test(vcData.unique_id) ? 'Invalid format (000000-0000000)' : '',
-		email: !vcData.email.includes('@') ? 'Invalid email format' : '',
-		address: vcData.address.trim() === '' ? 'Address is required' : '',
-		phone_number: !/^010-\d{3,4}-\d{4}$/.test(vcData.phone_number) ? 'Invalid format (010-0000-0000)' : '',
-		gender: vcData.gender === '' ? 'Please select gender' : '',
-		birth_date: '',  // 드롭다운이라 검증 불필요
-		citizenship: vcData.citizenship === '' ? 'Please select citizenship' : ''
-	};
-	dispatch(setVcDataError(newErrors));
-	return !Object.values(newErrors).some(error => error !== '');
-};
-
 const DateDropdown = () => {
 	const dispatch = useDispatch();
 	const vcData = useSelector((state: RootState) => state.vcDataReducer.vcData);

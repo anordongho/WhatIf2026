@@ -5,12 +5,11 @@ import VCSection from './components/VCSection';
 import { useSelector } from "react-redux";
 import { RootState } from "./redux/store/store";
 import { Section } from "./redux/slice/section";
-// import VPSection from './components/VPSection';
+import VPSection from './components/VPSection';
 // import VPListSection from './components/VPListSection';
 // import TallySection from './components/TallySection';
 
 const VotingApp = () => {
-	console.log("App");
 	const currentSection = useSelector((state: RootState) => state.sectionReducer.currentSection);
 	// const [message, setMessage] = useState('');
 
@@ -26,8 +25,8 @@ const VotingApp = () => {
         <div className="max-w-md w-full px-6 py-8">
 					{currentSection == Section.VOTE && <VoteSection />}
 					{currentSection == Section.VC && <VCSection />}
-					{/* {currentSection === "vp" && <VPSection />}
-					{currentSection === "vplist" && <VPListSection />}
+					{currentSection === "vp" && <VPSection />}
+					{/* {currentSection === "vplist" && <VPListSection />}
 					{currentSection === "tally" && <TallySection />} */}
 				</div>
 			</div>
