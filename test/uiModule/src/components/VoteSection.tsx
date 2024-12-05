@@ -1,17 +1,24 @@
 import React, { useState } from "react";
 import LoadingScreen from "./common/LoadingScreen";
 import SubmitButton from "./common/SubmitButton";
+import { useDispatch, useSelector } from "react-redux";
+import { setWaitingStatus, WaitingStatus } from "../redux/slice/waiting";
+import { setVoterUnverified, setVoterVerified } from "../redux/slice/verified";
+import { RootState } from "../redux/store/store";
 
 // setVote, setMessage, setIsVoteSubmitted, setIsVoterVerified, setIsVerifying, haslocalvp
 
 const VoteSection = () => {
-	const [isVoterVerified, setIsVoterVerified] = useState(false);
+	// const [isVoterVerified, setIsVoterVerified] = useState(false);
 	const [vote, setVote] = useState("");
 	const [message, setMessage] = useState("");
 	const [errorMessage, setErrorMessage] = useState("");
 	const [isVoteSubmitted, setIsVoteSubmitted] = useState(false);
-	const [isVerifying, setIsVerifying] = useState(false);
+	// const [isVerifying, setIsVerifying] = useState(false);
 	const [hasLocalVP, setHasLocalVP] = useState(false);
+	const isVoterVerified = useSelector((state: RootState) => state.voterVerifiedReducer.isVoterVerified);
+
+	const dispatch = useDispatch();
 
 	const handleLocalVpCheck = () => {
 		const vp = localStorage.getItem('VP');
@@ -27,6 +34,7 @@ const VoteSection = () => {
 		try {
 			// 0. fetch vp from local storage
 
+			dispatch(setWaitingStatus(WaitingStatus.VERIFYING));
 			const VP = localStorage.getItem('VP');
 
 			// 1. encrypt the data
@@ -45,13 +53,17 @@ const VoteSection = () => {
 
 				// if true: success / else something wrong with vp or not eligible for votes
 
-				setIsVerifying(false);
-				setIsVoterVerified(true);
+				// setIsVerifying(false);
+				dispatch(setWaitingStatus(WaitingStatus.IDLE));
+				console.log('VP Verification success:', data);
+				// setIsVoterVerified(true);
+				dispatch(setVoterVerified());
 				setMessage('Verification successful. You can now vote.');
 
 
 			} else {
 				setErrorMessage('Failed to send the VP');
+				dispatch(setVoterUnverified());
 			}
 
 		} catch (error) {
@@ -59,7 +71,7 @@ const VoteSection = () => {
 			console.error('Error:', error);
 		}
 
-		setIsVerifying(true);
+		// setIsVerifying(true);
 		// setTimeout(() => {
 		//   setIsVerifying(false);
 		//   setIsVoterVerified(true);
@@ -94,7 +106,8 @@ const VoteSection = () => {
 			setIsVoteSubmitted(true);
 			setTimeout(() => {
 				setIsVoteSubmitted(false);
-				setIsVoterVerified(false);
+				// setIsVoterVerified(false);
+				dispatch(setVoterUnverified());
 				setVote('');
 				setMessage('');
 			}, 1000);

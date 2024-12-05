@@ -4,6 +4,8 @@ import { vcDataSlice, vcDataErrorSlice } from "../slice/vcData";
 import messageSlice from "../slice/message";
 import errorMessageSlice from "../slice/errorMessage";
 import vpListSlice from "../slice/vpList";
+import { loadingDotsSlice, waitingSlice } from "../slice/waiting";
+import voterVerifiedSlice from "../slice/verified";
 
 const store = configureStore({
     reducer: {
@@ -12,7 +14,10 @@ const store = configureStore({
         vcDataErrorReducer: vcDataErrorSlice.reducer,
         messageReducer: messageSlice.reducer,
         errorMessageReducer: errorMessageSlice.reducer,
-        vpListReducer: vpListSlice.reducer
+        vpListReducer: vpListSlice.reducer,
+        waitingReducer: waitingSlice.reducer,
+        loadingDotsReducer: loadingDotsSlice.reducer,
+        voterVerifiedReducer: voterVerifiedSlice.reducer
     }
 });
 

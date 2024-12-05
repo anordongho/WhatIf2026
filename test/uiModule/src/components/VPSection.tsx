@@ -3,6 +3,8 @@ import SubmitButton from "./common/SubmitButton";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store/store";
 import { setVpList } from "../redux/slice/vpList";
+import LoadingScreen from "./common/LoadingScreen";
+import { setWaitingStatus, WaitingStatus } from "../redux/slice/waiting";
 
 // setIsPresentingVP, hasSdjwt
 
@@ -24,7 +26,7 @@ const VPSection = () => {
 	const [hasSdJwt, setHasSdJwt] = useState(false);
 	const [message, setMessage] = useState('');
 	const [errorMessage, setErrorMessage] = useState('');
-	const [isPresentingVP, setIsPresentingVP] = useState(false);
+	// const [isPresentingVP, setIsPresentingVP] = useState(false);
 	const [isVPGenerated, setIsVPGenerated] = useState(false);
 	
 	const vpList = useSelector((state: RootState) => state.vpListReducer.vpList);
@@ -50,7 +52,8 @@ const VPSection = () => {
 		e.preventDefault();
 
 		console.log(vpData) // checkbox values (true or false)
-		setIsPresentingVP(true);
+		// setIsPresentingVP(true);
+		dispatch(setWaitingStatus(WaitingStatus.PRESENTINGVP));
 
 		try {
 			// make the vc
@@ -84,7 +87,8 @@ const VPSection = () => {
 				localStorage.setItem('VPList', JSON.stringify(updatedVPs));
 				// setMyVPs(updatedVPs);
 
-				setIsPresentingVP(false);
+				// setIsPresentingVP(false);
+				dispatch(setWaitingStatus(WaitingStatus.IDLE));
 				setIsVPGenerated(true);
 				setMessage('VP generated successfully, and saved locally');
 
@@ -156,6 +160,8 @@ const VPSection = () => {
 				</div>
 			)}
 		</>
+
+
 	);
 };
 

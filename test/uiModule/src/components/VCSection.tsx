@@ -1,14 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import VCForm from "./VCForm";
 import { setVcDataError, VcData } from "../redux/slice/vcData";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store/store";
 import { setMessage } from "../redux/slice/message";
 import { setErrorMessage } from "../redux/slice/errorMessage";
+import { setWaitingStatus, WaitingStatus } from "../redux/slice/waiting";
 
 //setIsIssuing, setMessage, setIsVoterVerified
 
 const VCSection = () => {
+	// const [isIssuingVC, setIsIssuingVC] = useState(false);
 	const dispatch = useDispatch();
 	const vcData = useSelector((state: RootState) => state.vcDataReducer.vcData);
 
@@ -34,7 +36,8 @@ const VCSection = () => {
 			dispatch(setMessage('Please correct the errors before submitting.'));
 			return
 		}
-		//setIsIssuingVC(true);
+		// setIsIssuingVC(true);
+		dispatch(setWaitingStatus(WaitingStatus.ISSUINGVC));
 		console.log(vcData);
 
 		try {
@@ -78,6 +81,7 @@ const VCSection = () => {
 
 						// setVcCode(sdjwt)
 						// setIsIssuingVC(false);
+						dispatch(setWaitingStatus(WaitingStatus.IDLE));
 						dispatch(setMessage('VC issued successfully.'));
 
 					} else {
