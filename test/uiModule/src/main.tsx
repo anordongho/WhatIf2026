@@ -500,7 +500,7 @@ const VotingApp = () => {
 
   return (
     <div className="bg-black text-white min-h-screen flex flex-col" style={{ fontFamily: '"Pretendard", "DM Serif Display", serif' }}>
-      <Navbar onSectionClick={handleSectionClick} />
+      {/* <Navbar onSectionClick={handleSectionClick} /> */}
       <div className="flex-grow flex items-center justify-center">
         <div className="max-w-md w-full px-6 py-8">
           {isVerifying ? (
