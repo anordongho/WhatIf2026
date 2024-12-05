@@ -1,12 +1,12 @@
 import { useState } from "react";
-import SubmitButton from "./common/SubmitButton";
 import { useDispatch, useSelector } from "react-redux";
+
+import SubmitButton from "./common/SubmitButton";
+
 import { RootState } from "../redux/store/store";
 import { setVpList } from "../redux/slice/vpList";
-import LoadingScreen from "./common/LoadingScreen";
 import { setWaitingStatus, WaitingStatus } from "../redux/slice/waiting";
-
-// setIsPresentingVP, hasSdjwt
+import { setMessage } from "../redux/slice/message";
 
 const VPSection = () => {
 	const [vpData, setVpData] = useState({
@@ -24,12 +24,11 @@ const VPSection = () => {
 
 	const [sdJwt, setSdJwt] = useState('');
 	const [hasSdJwt, setHasSdJwt] = useState(false);
-	const [message, setMessage] = useState('');
+	// const [message, setMessage] = useState('');
 	const [errorMessage, setErrorMessage] = useState('');
-	// const [isPresentingVP, setIsPresentingVP] = useState(false);
 	const [isVPGenerated, setIsVPGenerated] = useState(false);
-	
-	const vpList = useSelector((state: RootState) => state.vpListReducer.vpList);
+
+	const message = useSelector((state: RootState) => state.messageReducer.message);
 	const dispatch = useDispatch();
 
 
@@ -52,7 +51,6 @@ const VPSection = () => {
 		e.preventDefault();
 
 		console.log(vpData) // checkbox values (true or false)
-		// setIsPresentingVP(true);
 		dispatch(setWaitingStatus(WaitingStatus.PRESENTINGVP));
 
 		try {
@@ -85,13 +83,10 @@ const VPSection = () => {
 				const updatedVPs = [...existingVPs, newVP];
 				dispatch(setVpList(updatedVPs));
 				localStorage.setItem('VPList', JSON.stringify(updatedVPs));
-				// setMyVPs(updatedVPs);
 
-				// setIsPresentingVP(false);
 				dispatch(setWaitingStatus(WaitingStatus.IDLE));
 				setIsVPGenerated(true);
-				setMessage('VP generated successfully, and saved locally');
-
+				dispatch(setMessage('VP generated successfully, and saved locally'));
 
 			} else {
 				setErrorMessage('Failed to make the vp');
@@ -101,20 +96,12 @@ const VPSection = () => {
 			setErrorMessage('Error occurred while making vp.');
 			console.error('Error:', error);
 		}
-
-
-		// setTimeout(() => {
-		//   const exampleVpCode = '0xadc99f9a8b8d78' + Math.random().toString(36).substring(2, 15);
-		//   setVpCode(exampleVpCode);
-		//   setIsPresentingVP(false);
-		//   setMessage('VP generated successfully.');
-		// }, 5000);
 	};
 
 	return (
 		<>
 			<h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>VP Generator</h2>
-			<div className="flex justify-end mb-4">  {/* Adjusted alignment to right */}
+			<div className="flex justify-end mb-4">
 				{/* Reload Button with Icon */}
 				<button
 					onClick={handleReload}

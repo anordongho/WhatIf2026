@@ -1,23 +1,26 @@
 import { configureStore } from "@reduxjs/toolkit";
+
 import sectionSlice from "../slice/section";
-import { vcDataSlice, vcDataErrorSlice } from "../slice/vcData";
 import messageSlice from "../slice/message";
 import errorMessageSlice from "../slice/errorMessage";
 import vpListSlice from "../slice/vpList";
-import { loadingDotsSlice, waitingSlice } from "../slice/waiting";
 import voterVerifiedSlice from "../slice/verified";
+import vcCodeSlice from "../slice/vcCode";
+import { vcDataSlice, vcDataErrorSlice } from "../slice/vcData";
+import { loadingDotsSlice, waitingSlice } from "../slice/waiting";
 
 const store = configureStore({
     reducer: {
         sectionReducer: sectionSlice.reducer,
+        waitingReducer: waitingSlice.reducer,
+        messageReducer: messageSlice.reducer,
+        loadingDotsReducer: loadingDotsSlice.reducer,
+        errorMessageReducer: errorMessageSlice.reducer,
         vcDataReducer: vcDataSlice.reducer,
         vcDataErrorReducer: vcDataErrorSlice.reducer,
-        messageReducer: messageSlice.reducer,
-        errorMessageReducer: errorMessageSlice.reducer,
+        vcCodeReducer: vcCodeSlice.reducer,
         vpListReducer: vpListSlice.reducer,
-        waitingReducer: waitingSlice.reducer,
-        loadingDotsReducer: loadingDotsSlice.reducer,
-        voterVerifiedReducer: voterVerifiedSlice.reducer
+        voterVerifiedReducer: voterVerifiedSlice.reducer,
     }
 });
 

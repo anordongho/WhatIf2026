@@ -1,22 +1,20 @@
 import React, { useState } from "react";
-import LoadingScreen from "./common/LoadingScreen";
-import SubmitButton from "./common/SubmitButton";
 import { useDispatch, useSelector } from "react-redux";
+
+import SubmitButton from "./common/SubmitButton";
+
+import { RootState } from "../redux/store/store";
 import { setWaitingStatus, WaitingStatus } from "../redux/slice/waiting";
 import { setVoterUnverified, setVoterVerified } from "../redux/slice/verified";
-import { RootState } from "../redux/store/store";
-
-// setVote, setMessage, setIsVoteSubmitted, setIsVoterVerified, setIsVerifying, haslocalvp
+import { setMessage } from "../redux/slice/message";
 
 const VoteSection = () => {
-	// const [isVoterVerified, setIsVoterVerified] = useState(false);
 	const [vote, setVote] = useState("");
-	const [message, setMessage] = useState("");
 	const [errorMessage, setErrorMessage] = useState("");
 	const [isVoteSubmitted, setIsVoteSubmitted] = useState(false);
-	// const [isVerifying, setIsVerifying] = useState(false);
 	const [hasLocalVP, setHasLocalVP] = useState(false);
 	const isVoterVerified = useSelector((state: RootState) => state.voterVerifiedReducer.isVoterVerified);
+	const message = useSelector((state: RootState) => state.messageReducer.message);
 
 	const dispatch = useDispatch();
 
@@ -47,21 +45,18 @@ const VoteSection = () => {
 			});
 
 			// 3. if successfully verified, update ui components(setIsVerifying, setIsVoterVerified, setMessage..)
+			dispatch(setWaitingStatus(WaitingStatus.IDLE));
 
 			if (response.status === 200) {
 				const data = await response.json();
 
 				// if true: success / else something wrong with vp or not eligible for votes
-
-				// setIsVerifying(false);
-				dispatch(setWaitingStatus(WaitingStatus.IDLE));
 				console.log('VP Verification success:', data);
-				// setIsVoterVerified(true);
 				dispatch(setVoterVerified());
-				setMessage('Verification successful. You can now vote.');
-
+				dispatch(setMessage('Verification successful. You can now vote.'));
 
 			} else {
+				console.log('VP Verification failed:', response);
 				setErrorMessage('Failed to send the VP');
 				dispatch(setVoterUnverified());
 			}
@@ -70,13 +65,6 @@ const VoteSection = () => {
 			setErrorMessage('Error occurred while sending & verifying VP.');
 			console.error('Error:', error);
 		}
-
-		// setIsVerifying(true);
-		// setTimeout(() => {
-		//   setIsVerifying(false);
-		//   setIsVoterVerified(true);
-		//   setMessage('Verification successful. You can now vote.');
-		// }, 5000);
 	};
 
 	const handleVoteSubmit = async (e: React.FormEvent) => {
@@ -94,22 +82,19 @@ const VoteSection = () => {
 				const { result } = await response.json();
 				console.log('Encryption result:', result);
 
-				setMessage('Your vote has been submitted successfully!');
-				// alert('Your vote has been submitted successfully!');
+				dispatch(setMessage('Your vote has been submitted successfully!'));
 			} else {
-				setMessage('Failed to submit your vote. Please try again.');
+				dispatch(setMessage('Failed to submit your vote. Please try again.'));
 			}
 		} catch (error) {
 			console.error('Error submitting vote:', error);
-			setMessage('An error occurred while submitting your vote.');
+			dispatch(setMessage('An error occurred while submitting your vote.'));
 		} finally {
 			setIsVoteSubmitted(true);
 			setTimeout(() => {
 				setIsVoteSubmitted(false);
-				// setIsVoterVerified(false);
 				dispatch(setVoterUnverified());
 				setVote('');
-				setMessage('');
 			}, 1000);
 		}
 	};
@@ -164,9 +149,6 @@ const VoteSection = () => {
 			}
 		</>
 	)
-
-	// return (
-	// );
 };
 
 export default VoteSection;
