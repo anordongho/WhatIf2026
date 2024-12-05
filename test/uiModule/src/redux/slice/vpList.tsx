@@ -22,14 +22,14 @@ const vpListSlice = createSlice({
 		setVpList: (state, action: PayloadAction<VPList>) => {
 			state.vpList = action.payload;
 		},
-		addVp: (state, action: PayloadAction<VP>) => {
-			state.vpList.push(action.payload);
-		},
-		removeVp: (state, action: PayloadAction<string>) => {
-			state.vpList = state.vpList.filter(vp => vp.id !== action.payload);
-		}
+		// addVp: (state, action: PayloadAction<VP>) => {
+		// 	state.vpList.push(action.payload);
+		// },
+		// removeVp: (state, action: PayloadAction<string>) => {
+		// 	state.vpList = state.vpList.filter(vp => vp.id !== action.payload);
+		// }
 	}
 });
 
 export default vpListSlice;
-export const { setVpList, addVp, removeVp } = vpListSlice.actions;
+export const { setVpList } = vpListSlice.actions;

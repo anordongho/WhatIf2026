@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "./redux/store/store";
 import { Section } from "./redux/slice/section";
 import VPSection from './components/VPSection';
-// import VPListSection from './components/VPListSection';
+import VPListSection from './components/VPListSection';
 // import TallySection from './components/TallySection';
 
 const VotingApp = () => {
@@ -26,8 +26,8 @@ const VotingApp = () => {
 					{currentSection == Section.VOTE && <VoteSection />}
 					{currentSection == Section.VC && <VCSection />}
 					{currentSection === "vp" && <VPSection />}
-					{/* {currentSection === "vplist" && <VPListSection />}
-					{currentSection === "tally" && <TallySection />} */}
+					{currentSection === "vplist" && <VPListSection />}
+					{/* {currentSection === "tally" && <TallySection />} */}
 				</div>
 			</div>
 		</div>
