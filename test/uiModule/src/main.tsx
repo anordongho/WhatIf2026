@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
+import Navbar from './components/Navbar';
+import SubmitButton from './components/common/SubmitButton';
 
 // local storage items: encryptedVotes (array of encrypted votes), VP (vp), disclosures, sdjwt, VPList
 
@@ -451,7 +453,6 @@ const VotingApp = () => {
     }
   };
 
-
   const NavButton = ({ section, label }: { section: string; label: string }) => (
     <button
       onClick={() => {
@@ -533,14 +534,7 @@ const VotingApp = () => {
 
   return (
     <div className="bg-black text-white min-h-screen flex flex-col" style={{ fontFamily: '"Pretendard", "DM Serif Display", serif' }}>
-      <nav className="p-4 absolute top-0 left-0">
-        <NavButton section="vote" label="투표하기(Verify & Vote)" />
-        <NavButton section="vc" label="신분 등록(VC Issue)" />
-        <NavButton section="vp" label="인증 정보 선택(VP Generate)" />
-        <NavButton section="vplist" label="내 VP 관리(My VPs)" />
-        <NavButton section="tally" label="투표 결과 확인(Check final results)" />
-      </nav>
-
+      {/* <Navbar onSectionClick={handleSectionClick} /> */}
       <div className="flex-grow flex items-center justify-center">
         <div className="max-w-md w-full px-6 py-8">
           {isVerifying ? (
