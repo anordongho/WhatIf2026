@@ -13,7 +13,6 @@ import LoadingScreen from "./components/common/LoadingScreen";
 import { RootState } from "./redux/store/store";
 import { Section } from "./redux/slice/section";
 import { WaitingStatus } from "./redux/slice/waiting";
-import { setVcCode } from "./redux/slice/vcCode";
 import { setVoterUnverified } from "./redux/slice/verified";
 import { setMessage } from "./redux/slice/message";
 import { setErrorMessage } from "./redux/slice/errorMessage";
@@ -37,7 +36,6 @@ const VotingApp = () => {
 	useEffect(() => {
 		dispatch(setMessage(''));
 		dispatch(setErrorMessage(''));
-		dispatch(setVcCode(''));
 		dispatch(setVoterUnverified());
 	}, [currentSection]);
 

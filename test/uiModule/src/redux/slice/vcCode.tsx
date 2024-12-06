@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 const initialVcCodeState: { vcCode: string } = {
-    vcCode: ''
+    vcCode: localStorage.getItem('sdjwt') || '',
 };
 
 const vcCodeSlice = createSlice({

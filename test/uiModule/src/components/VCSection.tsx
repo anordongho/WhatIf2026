@@ -80,8 +80,6 @@ const VCSection = () => {
 						localStorage.setItem('disclosures', JSON.stringify(decodedDisclosures));
 						dispatch(setVcCode(sdjwt));
 						dispatch(setWaitingStatus(WaitingStatus.IDLE));
-						dispatch(setMessage('VC issued successfully.'));
-
 					} else {
 						dispatch(setErrorMessage('Failed to decode SD-JWT from the server.'));
 					}
@@ -95,10 +93,6 @@ const VCSection = () => {
 		} catch (error) {
 			console.error('Error submitting VC:', error);
 			dispatch(setMessage('An error occurred while submitting your VC.'));
-		} finally {
-			setTimeout(() => {
-				dispatch(setMessage(''));
-			}, 1000);
 		}
 	};
 
@@ -106,8 +100,14 @@ const VCSection = () => {
 		<div className="flex-grow flex items-center justify-center">
 			<div className="max-w-md w-full px-6 py-8">
 				<>
-					<h2 className="text-5xl font-bold mb-8 pt-8" style={{ color: '#ffa600' }}>VC Issuer</h2>
-					<VCForm handleVcSubmit={handleVCSubmit} />
+					{!localStorage.getItem('sdjwt') ? (
+						<>
+							<h2 className="text-5xl font-bold mb-8 pt-8" style={{ color: '#ffa600' }}>VC Issuer</h2>
+							<VCForm handleVcSubmit={handleVCSubmit} />
+						</>
+					) : (
+						<h2 className="text-5xl font-bold mb-8 pt-8" style={{ color: '#ffa600' }}>You have issued your VC!</h2>
+					)}
 					{message && (
 						<div className="mt-4 text-[#ffa600]">{message}</div>
 					)}
