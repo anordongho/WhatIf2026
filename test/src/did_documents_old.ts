@@ -311,4 +311,3 @@ getAttribute("0x01e708B4e91842a677adDF1Ec5211875f070C5f2", 'did/pub/Ed25519/veri
   console.error('Unhandled error:', error);
   process.exit(1);
 });
-
