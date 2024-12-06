@@ -7,14 +7,16 @@ import { RootState } from "../redux/store/store";
 import { setWaitingStatus, WaitingStatus } from "../redux/slice/waiting";
 import { setVoterUnverified, setVoterVerified } from "../redux/slice/verified";
 import { setMessage } from "../redux/slice/message";
+import { setErrorMessage } from "../redux/slice/errorMessage";
 
 const VoteSection = () => {
 	const [vote, setVote] = useState("");
-	const [errorMessage, setErrorMessage] = useState("");
+	// const [errorMessage, setErrorMessage] = useState("");
 	const [isVoteSubmitted, setIsVoteSubmitted] = useState(false);
 	const [hasLocalVP, setHasLocalVP] = useState(false);
 	const isVoterVerified = useSelector((state: RootState) => state.voterVerifiedReducer.isVoterVerified);
 	const message = useSelector((state: RootState) => state.messageReducer.message);
+	const errorMessage = useSelector((state: RootState) => state.errorMessageReducer.errorMessage);
 
 	const dispatch = useDispatch();
 
@@ -44,25 +46,39 @@ const VoteSection = () => {
 				body: JSON.stringify({ vp: VP }),
 			});
 
-			// 3. if successfully verified, update ui components(setIsVerifying, setIsVoterVerified, setMessage..)
+			const data = await response.json();
 			dispatch(setWaitingStatus(WaitingStatus.IDLE));
 
 			if (response.status === 200) {
-				const data = await response.json();
-
 				// if true: success / else something wrong with vp or not eligible for votes
 				console.log('VP Verification success:', data);
 				dispatch(setVoterVerified());
 				dispatch(setMessage('Verification successful. You can now vote.'));
 
 			} else {
-				console.log('VP Verification failed:', response);
-				setErrorMessage('Failed to send the VP');
+				switch (data.code) {
+					case 'INVALID_SIGNATURE':
+						dispatch(setErrorMessage("The VP's signature is invalid."));
+						alert("The VP's signature is invalid.");
+						break;
+					case 'INVALID_CITIZENSHIP':
+						dispatch(setErrorMessage("You are not a citizen of Republic of Korea."));
+						alert("You are not a citizen of Republic of Korea.");
+						break;
+					case 'UNDERAGE':
+						dispatch(setErrorMessage("You are under the required age to vote."));
+						alert("You are under the required age to vote.");
+						break;
+					default:
+						dispatch(setErrorMessage(data.message || "Verification failed.\nAre all required information included?"));
+						alert(data.message || "Verification failed.\nAre all required information included?");
+						break;
+				}
 				dispatch(setVoterUnverified());
 			}
 
 		} catch (error) {
-			setErrorMessage('Error occurred while sending & verifying VP.');
+			dispatch(setErrorMessage('Error occurred while sending & verifying VP.'));
 			console.error('Error:', error);
 		}
 	};
@@ -109,7 +125,7 @@ const VoteSection = () => {
 				<>
 					<h1 className="text-2xl mb-2">Be a part of decision</h1>
 					<h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>Verify your right to vote</h2>
-					{!isVoterVerified && (
+					{!isVoterVerified && !errorMessage && (
 						<form onSubmit={handleVpSubmit} className="mb-4">
 							<button
 								type="button"
@@ -120,6 +136,12 @@ const VoteSection = () => {
 							</button>
 							<SubmitButton label="VERIFY" disabled={!hasLocalVP} />
 						</form>
+					)}
+
+					{errorMessage && (
+						<div className="mt-4 p-4 bg-red-500 text-white rounded-md text-center mx-auto w-full sm:w-auto">
+							{errorMessage}
+						</div>
 					)}
 
 					{message && (
