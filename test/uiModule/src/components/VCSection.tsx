@@ -107,7 +107,7 @@ const VCSection = () => {
 		<div className="flex-grow flex items-center justify-center">
 			<div className="max-w-md w-full px-6 py-8">
 				<>
-					<h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>VC Issuer</h2>
+					<h2 className="text-5xl font-bold mb-8 pt-8" style={{ color: '#ffa600' }}>VC Issuer</h2>
 					<VCForm handleVcSubmit={handleVCSubmit} />
 					{message && (
 						<div className="mt-4 text-[#ffa600]">{message}</div>

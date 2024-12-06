@@ -11,9 +11,9 @@ import { setErrorMessage } from "../redux/slice/errorMessage";
 
 const VoteSection = () => {
 	const [vote, setVote] = useState("");
-	// const [errorMessage, setErrorMessage] = useState("");
 	const [isVoteSubmitted, setIsVoteSubmitted] = useState(false);
 	const [hasLocalVP, setHasLocalVP] = useState(false);
+
 	const isVoterVerified = useSelector((state: RootState) => state.voterVerifiedReducer.isVoterVerified);
 	const message = useSelector((state: RootState) => state.messageReducer.message);
 	const errorMessage = useSelector((state: RootState) => state.errorMessageReducer.errorMessage);

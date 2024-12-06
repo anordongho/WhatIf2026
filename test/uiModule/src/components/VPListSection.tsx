@@ -32,7 +32,7 @@ const VPListSection = () => {
 
   return (
     <>
-      <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>내 VP 목록</h2>
+      <h2 className="text-5xl font-bold mb-8  pt-16" style={{ color: '#ffa600' }}>내 VP 목록</h2>
       <div className="grid grid-cols-1 gap-4">
         {myVPs.map((vp) => (
           <div key={vp.id} className="bg-[#1f2937] rounded-xl p-6" style={{ fontFamily: '"Pretendard", "DM Serif Display", serif' }}>

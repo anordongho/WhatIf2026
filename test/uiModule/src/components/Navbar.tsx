@@ -7,8 +7,7 @@ export default function Navbar() {
 	const NavButton = ({ section, label }: { section: Section; label: string }) => (
 		<button
 			onClick={() => {dispatch(setSection(section))}}
-			className="text-[#ffa600] hover:text-white transition-colors duration-300 text-sm mr-4 py-2"
-		>
+			className="text-[#ffa600] hover:text-white transition-colors duration-300 text-sm mr-4 py-4"		>
 			{label}
 		</button>
 	);
