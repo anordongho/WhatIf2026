@@ -8,6 +8,7 @@ import voterVerifiedSlice from "../slice/verified";
 import vcCodeSlice from "../slice/vcCode";
 import { vcDataSlice, vcDataErrorSlice } from "../slice/vcData";
 import { loadingDotsSlice, waitingSlice } from "../slice/waiting";
+import vpSelectedSlice from "../slice/vpSelected";
 
 const store = configureStore({
     reducer: {
@@ -20,6 +21,7 @@ const store = configureStore({
         vcDataErrorReducer: vcDataErrorSlice.reducer,
         vcCodeReducer: vcCodeSlice.reducer,
         vpListReducer: vpListSlice.reducer,
+        vpSelectedReducer: vpSelectedSlice.reducer,
         voterVerifiedReducer: voterVerifiedSlice.reducer,
     }
 });

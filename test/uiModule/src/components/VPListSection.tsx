@@ -4,8 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../redux/store/store";
 import { Section, setSection } from "../redux/slice/section";
 import { setVpList } from "../redux/slice/vpList";
-
-
+import { setVPSelected } from "../redux/slice/vpSelected";
 
 const VPListSection = () => {
   const myVPs = useSelector((state: RootState) => state.vpListReducer.vpList);
@@ -20,6 +19,7 @@ const VPListSection = () => {
   const handleUseVP = (vp: object) => {
     localStorage.setItem('VP', JSON.stringify(vp));
     dispatch(setSection(Section.VOTE));
+    dispatch(setVPSelected());
   };
 
   const handleDeleteVP = (id: string) => {

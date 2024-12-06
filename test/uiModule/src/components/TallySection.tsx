@@ -1,12 +1,10 @@
 import { useState } from "react";
 
-
 const TallySection = () => {
 	const [message, setMessage] = useState('');
 	const [detailedResults, setDetailedResults] = useState('');
 
 	const handleFinalTally = async () => {
-
 		try {
 			const response = await fetch('/final-tally', {
 				method: 'POST',

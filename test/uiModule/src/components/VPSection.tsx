@@ -16,7 +16,6 @@ const VPSection = () => {
 		email: false,
 		address: false,
 		phone_number: false,
-
 		gender: false,
 		birth_date: false,
 		citizenship: false,

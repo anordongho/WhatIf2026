@@ -89,7 +89,6 @@ const VCSection = () => {
 				} else {
 					dispatch(setErrorMessage('Failed to decrypt the given data.'));
 				}
-
 			} else {
 				dispatch(setErrorMessage('Failed to fetch SD-JWT from the server.'));
 			}

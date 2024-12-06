@@ -6,14 +6,16 @@ import SubmitButton from "./common/SubmitButton";
 import { RootState } from "../redux/store/store";
 import { setWaitingStatus, WaitingStatus } from "../redux/slice/waiting";
 import { setVoterUnverified, setVoterVerified } from "../redux/slice/verified";
+import { setVPUnselected } from "../redux/slice/vpSelected";
 import { setMessage } from "../redux/slice/message";
 import { setErrorMessage } from "../redux/slice/errorMessage";
+import { Section, setSection } from "../redux/slice/section";
 
 const VoteSection = () => {
 	const [vote, setVote] = useState("");
 	const [isVoteSubmitted, setIsVoteSubmitted] = useState(false);
-	const [hasLocalVP, setHasLocalVP] = useState(false);
 
+	const isVPSelected = useSelector((state: RootState) => state.vpSelectedReducer.isSelected);
 	const isVoterVerified = useSelector((state: RootState) => state.voterVerifiedReducer.isVoterVerified);
 	const message = useSelector((state: RootState) => state.messageReducer.message);
 	const errorMessage = useSelector((state: RootState) => state.errorMessageReducer.errorMessage);
@@ -21,14 +23,12 @@ const VoteSection = () => {
 	const dispatch = useDispatch();
 
 	const handleLocalVpCheck = () => {
-		const vp = localStorage.getItem('VP');
-		if (vp) setHasLocalVP(true);
-		else setHasLocalVP(false);
+		dispatch(setSection(Section.VP_LIST));
 	}
 
 	// Holder sending the vp to verifier
 	const handleVpSubmit = async (e: React.FormEvent) => {
-
+		dispatch(setVPUnselected());
 		e.preventDefault();
 
 		try {
@@ -68,6 +68,18 @@ const VoteSection = () => {
 					case 'UNDERAGE':
 						dispatch(setErrorMessage("You are under the required age to vote."));
 						alert("You are under the required age to vote.");
+						break;
+					case 'VC_INVALID':
+						dispatch(setErrorMessage("Your VC is not valid anymore."));
+						alert("Your VC is not valid anymore.");
+						break;
+					case 'MISSING_FIELDS':
+						dispatch(setErrorMessage("VP is missing required fields."));
+						alert("VP is missing required fields.");
+						break;
+					case 'DUPLICATE_PUBLIC_KEY':
+						dispatch(setErrorMessage("You have already voted."));
+						alert("You have already voted.");
 						break;
 					default:
 						dispatch(setErrorMessage(data.message || "Verification failed.\nAre all required information included?"));
@@ -125,7 +137,7 @@ const VoteSection = () => {
 				<>
 					<h1 className="text-2xl mb-2">Be a part of decision</h1>
 					<h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>Verify your right to vote</h2>
-					{!isVoterVerified && !errorMessage && (
+					{!isVoterVerified && (
 						<form onSubmit={handleVpSubmit} className="mb-4">
 							<button
 								type="button"
@@ -134,7 +146,11 @@ const VoteSection = () => {
 							>
 								Look for Locally Stored VPs
 							</button>
-							<SubmitButton label="VERIFY" disabled={!hasLocalVP} />
+							<>
+								{isVPSelected && (
+									<SubmitButton label="VERIFY" disabled={!isVPSelected} />
+								)}
+							</>
 						</form>
 					)}
 
