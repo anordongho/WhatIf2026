@@ -5,7 +5,7 @@ import { Holder } from "./holder";
 import { Issuer } from "./issuer";
 import { VCVerifier } from "./verifier";
 import { VPInfo } from "./myType";
-import { DIDRegistryClient, PublicKey} from './didTest';
+import { DIDRegistryClient, PublicKey } from './didTest';
 
 
 const app = express();
@@ -56,15 +56,15 @@ app.post('/issue-vc', async (req: Request, res: Response) => {
     if (!formContents) {
       return res.status(400).json({ error: 'Form contents are required' });
     }
-    
+
     // 홀더의 이더리움 주소로 DID Document 조회
     const holderEthereumAddress = "0x01e708B4e91842a677adDF1Ec5211875f070C5f2";
     const holderDID = `did:eth:${holderEthereumAddress.toLowerCase()}`;
-    
+
     console.log("Attempting to resolve DID:", holderDID);
     const didClient = new DIDRegistryClient("https://sepolia.infura.io/v3/f1db94136c374e1f85a561d4171dcd2a", "c505618b9bf373fa6cccf77afb081cc7d8c4eaee1a0f7be02b0bdf4649d6cac3");
     const didDocument = await didClient.resolveDID(holderDID);
-    
+
     // 활성화된 첫 번째 공개키 찾기
     // const activePublicKey = didDocument.publicKeys.find((key: PublicKey) => key.active);
     // if (activePublicKey) {
@@ -171,15 +171,16 @@ app.post('/submit-vp', async (req: Request, res: Response) => {
     // console.log("Decrypted vp on vcVerifier side: ", vp);
 
     // vp verification logic
-    const vpVerified = await vcVerifier.verifyVP(vp);
-    if (!vpVerified) {
-      res.status(403).json({ error: 'invalid VP' });
+    const result = await vcVerifier.verifyVP(vp);
+
+    if (!result.status) {
+      res.status(403).json({ code: result.code, message: result.message });
     } else {
-      res.status(200).json({ result: 'VP verified' });
+      res.status(200).json({ code: result.code, message: result.message });
     }
 
   } catch (error) {
-    console.error('Error while making VP:', error);
+    console.error('Error while VP submission:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });

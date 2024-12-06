@@ -155,20 +155,36 @@ const VotingApp = () => {
         body: JSON.stringify({ vp: VP }),
       });
 
+      const data = await response.json();
+
       // 3. if successfully verified, update ui components(setIsVerifying, setIsVoterVerified, setMessage..)
 
       if (response.status === 200) {
-        const data = await response.json();
 
         // if true: success / else something wrong with vp or not eligible for votes
 
+        setErrorMessage(null);
         setIsVerifying(false);
         setIsVoterVerified(true);
         setMessage('Verification successful. You can now vote.');
 
 
       } else {
-        setErrorMessage('Failed to send the VP');
+        setIsVerifying(false);
+        switch (data.code) {
+          case 'INVALID_SIGNATURE':
+            setErrorMessage("The VP's signature is invalid.");
+            break;
+          case 'INVALID_CITIZENSHIP':
+            setErrorMessage("You are not a citizen of Korea.");
+            break;
+          case 'UNDERAGE':
+            setErrorMessage("You are under the required age to vote.");
+            break;
+          default:
+            setErrorMessage(data.message || "Verification failed. Are all required information included?");
+        }
+
       }
 
     } catch (error) {
@@ -437,10 +453,28 @@ const VotingApp = () => {
     }
   };
 
-  const handleSectionClick = (section: string) => {
-		setCurrentSection(section);
-		setMessage('');
-	}
+  const NavButton = ({ section, label }: { section: string; label: string }) => (
+    <button
+      onClick={() => {
+        setCurrentSection(section);
+        setMessage(''); // 네비게이션 시 메시지 초기화
+      }}
+      className="text-[#ffa600] hover:text-white transition-colors duration-300 text-sm mr-4 py-4"
+    >
+      {label}
+    </button>
+  );
+
+  const SubmitButton = ({ label, disabled = false }: { label: string; disabled?: boolean }) => (
+    <button
+      type="submit"
+      disabled={disabled}
+      className={`bg-[#f78400] text-white p-3 rounded-md w-full text-lg font-sans font-bold 
+        ${disabled ? 'bg-gray-400 cursor-not-allowed' : 'hover:bg-[#cd812a] transition-colors duration-300'}`}
+    >
+      {label}
+    </button>
+  );
 
   const LoadingScreen = ({ message }: { message: string }) => (
     <div className="text-center">
@@ -531,6 +565,12 @@ const VotingApp = () => {
                 </form>
               )}
 
+              {errorMessage && (
+                <div className="mt-4 p-4 bg-red-500 text-white rounded-md text-center mx-auto w-full sm:w-auto">
+                  {errorMessage}
+                </div>
+              )}
+
               {message && (
                 <div className="mt-4 text-[#ffa600]">{message}</div>
               )}
@@ -556,7 +596,8 @@ const VotingApp = () => {
             </>
           ) : currentSection === 'vc' ? (
             <>
-              <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>VC Issuer</h2>
+              <h2 className="text-5xl font-bold mb-8 pt-8" style={{ color: '#ffa600' }}>VC Issuer</h2>
+
               <form onSubmit={handleVcSubmit}>
                 {Object.keys(vcData).map((key) => {
                   const typedKey = key as keyof typeof vcData;
@@ -642,7 +683,7 @@ const VotingApp = () => {
             </>
           ) : currentSection === 'vp' ? (
             <>
-              <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>VP Generator</h2>
+              <h2 className="text-5xl font-bold mb-8 pt-16" style={{ color: '#ffa600' }}>VP Generator</h2>
 
               <div className="flex justify-end mb-4">  {/* Adjusted alignment to right */}
                 {/* Reload Button with Icon */}
@@ -695,7 +736,7 @@ const VotingApp = () => {
 
           ) : currentSection === 'vplist' ? (
             <>
-              <h2 className="text-5xl font-bold mb-8" style={{ color: '#ffa600' }}>내 VP 목록</h2>
+              <h2 className="text-5xl font-bold mb-8  pt-16" style={{ color: '#ffa600' }}>내 VP 목록</h2>
               <div className="grid grid-cols-1 gap-4">
                 {myVPs.map((vp) => (
                   <div key={vp.id} className="bg-[#1f2937] rounded-xl p-6" style={{ fontFamily: '"Pretendard", "DM Serif Display", serif' }}>
